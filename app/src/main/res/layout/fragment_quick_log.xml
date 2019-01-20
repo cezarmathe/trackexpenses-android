@@ -7,9 +7,25 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/button4"
-        android:layout_width="54dp"
-        android:layout_height="36dp"
+        android:id="@+id/quicklog_operation_button"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="+"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.36"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/quicklog_amount_edittext"
+        app:layout_constraintVertical_bias="0.005" />
+
+    <Button
+        android:id="@+id/quicklog_currency_button"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -17,13 +33,13 @@
         android:text="USD"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.633"
+        app:layout_constraintHorizontal_bias="0.613"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editText"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/quicklog_amount_edittext"
+        app:layout_constraintVertical_bias="0.005" />
 
     <EditText
-        android:id="@+id/editText"
+        android:id="@+id/quicklog_amount_edittext"
         android:layout_width="138dp"
         android:layout_height="42dp"
         android:layout_marginTop="8dp"
@@ -31,7 +47,7 @@
         android:layout_marginBottom="8dp"
         android:autofillHints="How much did you spend today?"
         android:ems="10"
-        android:inputType="number"
+        android:inputType="numberDecimal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,9 +55,9 @@
         app:layout_constraintVertical_bias="0.459" />
 
     <Button
-        android:id="@+id/button"
-        android:layout_width="123dp"
-        android:layout_height="61dp"
+        android:id="@+id/quicklog_log_button"
+        android:layout_width="138dp"
+        android:layout_height="50dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -49,11 +65,13 @@
         android:text="Log"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.482"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editText" />
+        app:layout_constraintTop_toBottomOf="@+id/quicklog_amount_edittext"
+        app:layout_constraintVertical_bias="0.507" />
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/quicklog_notes_button"
         android:layout_width="79dp"
         android:layout_height="46dp"
         android:layout_marginStart="8dp"
@@ -62,14 +80,14 @@
         android:layout_marginBottom="8dp"
         android:text="Notes"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/editText"
+        app:layout_constraintEnd_toStartOf="@+id/quicklog_amount_edittext"
         app:layout_constraintHorizontal_bias="0.285"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.454" />
 
     <Button
-        android:id="@+id/button5"
+        android:id="@+id/quicklog_date_button"
         android:layout_width="79dp"
         android:layout_height="46dp"
         android:layout_marginStart="8dp"
@@ -80,14 +98,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.714"
-        app:layout_constraintStart_toEndOf="@+id/editText"
+        app:layout_constraintStart_toEndOf="@+id/quicklog_amount_edittext"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.454" />
 
     <TextView
-        android:id="@+id/textView"
-        android:layout_width="151dp"
-        android:layout_height="47dp"
+        android:id="@+id/quicklog_title_textview"
+        android:layout_width="338dp"
+        android:layout_height="58dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -95,7 +113,7 @@
         android:text="Quick log"
         android:textAlignment="center"
         android:textSize="36sp"
-        app:layout_constraintBottom_toTopOf="@+id/editText"
+        app:layout_constraintBottom_toTopOf="@+id/quicklog_amount_edittext"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

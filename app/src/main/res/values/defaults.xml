@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <fraction name="QUICK_LOG_AMOUNT">0.00</fraction>
+    <string name="QUICK_LOG_CURRENCY">RON</string>
+</resources>

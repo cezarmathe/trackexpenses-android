@@ -4,7 +4,7 @@
         android:title="History"
         android:checkable="true"/>
 
-    <item android:id="@+id/add_bottom_navigation_item"
+    <item android:id="@+id/quicklog_bottom_navigation_item"
         android:title="Quick log"
         android:checkable="true"/>
 

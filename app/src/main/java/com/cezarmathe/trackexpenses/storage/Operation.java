@@ -1,8 +1,11 @@
 package com.cezarmathe.trackexpenses.storage;
 
+import android.graphics.Path;
+import android.support.annotation.Nullable;
+
 public enum Operation {
     ADDITION,
-    DELETION;
+    SUBTRACTION;
 
     @Override
     public String toString() {
@@ -13,10 +16,24 @@ public enum Operation {
         switch (this) {
             case ADDITION:
                 return "+";
-            case DELETION:
+            case SUBTRACTION:
                 return "-";
             default:
                 return "";
+        }
+    }
+
+    public static Operation fromString(@Nullable String string) {
+        if (string == null) {
+            return Operation.SUBTRACTION;
+        }
+        switch (string) {
+            case "+":
+                return Operation.ADDITION;
+            case "-":
+                return Operation.SUBTRACTION;
+            default:
+                return Operation.SUBTRACTION;
         }
     }
 }
