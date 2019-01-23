@@ -12,9 +12,9 @@ import android.widget.EditText;
 
 import com.cezarmathe.trackexpenses.R;
 import com.cezarmathe.trackexpenses.config.Defaults;
-import com.cezarmathe.trackexpenses.storage.Operation;
-import com.cezarmathe.trackexpenses.storage.StorageDate;
-import com.cezarmathe.trackexpenses.storage.StorageTableRow;
+import com.cezarmathe.trackexpenses.storage.types.Operation;
+import com.cezarmathe.trackexpenses.storage.types.Time;
+import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.Currency;
 
@@ -25,13 +25,14 @@ public class QuickLogFragment extends Fragment {
     private static final String ARG_CURRENCY    = "currency";
     private static final String ARG_NOTES       = "notes";
     private static final String ARG_OPERATION   = "operation";
+    private static final String ARG_TIME        = "time";
 
     private Defaults defaults;
 
-    private double      paramAmount;
-    private Currency    paramCurrency;
-    private String      paramNotes;
-    private Operation   paramOperation;
+    private double      amount;
+    private Currency    currency;
+    private String      notes;
+    private Operation   operation;
 
 //    UI event listener
     private OnFragmentInteractionListener mListener;
@@ -39,7 +40,7 @@ public class QuickLogFragment extends Fragment {
 //    UI elements
     private Button      logButton;
     private Button      currencyButton;
-    private Button      dateButton;
+    private Button      timeButton;
     private Button      notesButton;
     private EditText    amountEditText;
     private Button      operationButton;
@@ -74,16 +75,16 @@ public class QuickLogFragment extends Fragment {
 
         if (getArguments() != null) {
             Log.i(TAG, "using passed arguments as parameters");
-            paramAmount     =                       getArguments().getDouble(ARG_AMOUNT,    defaults.QUICK_LOG_AMOUNT   );
-            paramCurrency   = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  defaults.QUICK_LOG_CURRENCY ));
-            paramNotes      =                       getArguments().getString(ARG_NOTES,     defaults.QUICK_LOG_NOTES    );
-            paramOperation  = Operation.fromString( getArguments().getString(ARG_OPERATION, defaults.QUICK_LOG_OPERATION));
+            amount      =                       getArguments().getDouble(ARG_AMOUNT,    defaults.QUICK_LOG_AMOUNT   );
+            currency    = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  defaults.QUICK_LOG_CURRENCY ));
+            notes       =                       getArguments().getString(ARG_NOTES,     defaults.QUICK_LOG_NOTES    );
+            operation   = Operation.parseString(getArguments().getString(ARG_OPERATION, defaults.QUICK_LOG_OPERATION));
         } else {
             Log.i(TAG, "using defaults as parameters");
-            paramAmount     =                       defaults.QUICK_LOG_AMOUNT;
-            paramCurrency   = Currency.getInstance( defaults.QUICK_LOG_CURRENCY);
-            paramNotes      =                       defaults.QUICK_LOG_NOTES;
-            paramOperation  = Operation.fromString( defaults.QUICK_LOG_OPERATION);
+            amount      =                       defaults.QUICK_LOG_AMOUNT;
+            currency    = Currency.getInstance( defaults.QUICK_LOG_CURRENCY);
+            notes       =                       defaults.QUICK_LOG_NOTES;
+            operation   = Operation.parseString(defaults.QUICK_LOG_OPERATION);
         }
     }
 
@@ -101,10 +102,10 @@ public class QuickLogFragment extends Fragment {
         });
 
         currencyButton = view.findViewById(R.id.quicklog_currency_button);
-        if (paramCurrency != null) {
-            currencyButton.setText(paramCurrency.toString());
+        if (currency != null) {
+            currencyButton.setText(currency.toString());
         } else {
-            currencyButton.setText(R.string.quick_log_default_currency);
+            currencyButton.setText(defaults.QUICK_LOG_CURRENCY);
         }
         currencyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -120,8 +121,8 @@ public class QuickLogFragment extends Fragment {
             }
         });
 
-        dateButton = view.findViewById(R.id.quicklog_date_button);
-        dateButton.setOnClickListener(new View.OnClickListener() {
+        timeButton = view.findViewById(R.id.quicklog_date_button);
+        timeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 onDateButtonPressed();
@@ -137,10 +138,10 @@ public class QuickLogFragment extends Fragment {
         });
 
         amountEditText = view.findViewById(R.id.quicklog_amount_edittext);
-        amountEditText.setText(Double.toString(paramAmount));
+        amountEditText.setText(defaults.QUICK_LOG_AMOUNT.toString());
 
         operationButton = view.findViewById(R.id.quicklog_operation_button);
-        operationButton.setText(paramOperation.toSign() );
+        operationButton.setText(operation.toSign() );
         operationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -171,10 +172,10 @@ public class QuickLogFragment extends Fragment {
     }
 
     public interface OnFragmentInteractionListener {
-        void onLogButtonPressed(StorageTableRow dataRow);
+        void onLogButtonPressed(MoneyTableRow bean);
         Currency onCurrencyButtonPressed();
         Currency onCurrencyButtonLongPressed();
-        void onDateButtonPressed(boolean save, StorageDate date);
+        void onDateButtonPressed(boolean save, Time Time);
         void onNotesButtonPressed(boolean save, String notes);
         void onOperationButtonPressed(Operation operation);
     }
@@ -182,40 +183,45 @@ public class QuickLogFragment extends Fragment {
     public void onLogButtonPressed() {
         if (mListener != null) {
             Log.d(TAG, "log button pressed");
-            double amount = Double.parseDouble(amountEditText.getText().toString());
+            MoneyTableRow bean = new MoneyTableRow();
 
-//            StorageTableRow row = new StorageTableRow(amount);
+            bean.setAmount(Double.parseDouble(amountEditText.getText().toString()));
+            bean.setCurrency(currency);
+            bean.setTime(Time.newInstance());
+            bean.setNotes(notes);
+            bean.setOperation(operation);
 
-//            mListener.onLogButtonPressed(dataRow);
+            mListener.onLogButtonPressed(bean);
         }
     }
 
     public void onCurrencyButtonPressed() {
         if (mListener != null) {
             Log.d(TAG, "currency button pressed");
-            paramCurrency = mListener.onCurrencyButtonPressed();
-            currencyButton.setText(paramCurrency.toString());
+            currency = mListener.onCurrencyButtonPressed();
+            currencyButton.setText(currency.toString());
         }
     }
 
     public void onCurrencyButtonLongPressed() {
         if (mListener != null) {
             Log.d(TAG, "currency button long pressed");
-            paramCurrency = mListener.onCurrencyButtonLongPressed();
-            currencyButton.setText(paramCurrency.toString());
+            currency = mListener.onCurrencyButtonLongPressed();
+            currencyButton.setText(currency.toString());
         }
     }
 
     public void onDateButtonPressed() {
         if (mListener != null) {
             Log.d(TAG, "date button pressed");
-            mListener.onDateButtonPressed(false, StorageDate.newInstance());
+            mListener.onDateButtonPressed(false, Time.newInstance());
         }
     }
 
     public void onNotesButtonPressed() {
         if (mListener != null) {
             Log.d(TAG, "notes button pressed");
+            notes = "This is a test";
             mListener.onNotesButtonPressed(false, "");
         }
     }
@@ -227,11 +233,13 @@ public class QuickLogFragment extends Fragment {
                 case "+":
                     mListener.onOperationButtonPressed(Operation.ADDITION);
                     operationButton.setText(Operation.SUBTRACTION.toSign());
+                    operation = Operation.SUBTRACTION;
                     Log.i(TAG, "switched to " + Operation.SUBTRACTION.toString());
                     break;
                 case "-":
                     mListener.onOperationButtonPressed(Operation.SUBTRACTION);
                     operationButton.setText(Operation.ADDITION.toSign());
+                    operation = Operation.ADDITION;
                     Log.i(TAG, "switched to " + Operation.ADDITION.toString());
                     break;
             }

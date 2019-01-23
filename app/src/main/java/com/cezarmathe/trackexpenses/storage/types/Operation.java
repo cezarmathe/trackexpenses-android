@@ -1,6 +1,5 @@
-package com.cezarmathe.trackexpenses.storage;
+package com.cezarmathe.trackexpenses.storage.types;
 
-import android.graphics.Path;
 import android.support.annotation.Nullable;
 
 public enum Operation {
@@ -23,7 +22,7 @@ public enum Operation {
         }
     }
 
-    public static Operation fromString(@Nullable String string) {
+    public static Operation parseString(@Nullable String string) {
         if (string == null) {
             return Operation.SUBTRACTION;
         }

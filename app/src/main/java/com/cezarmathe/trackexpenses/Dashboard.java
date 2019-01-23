@@ -7,17 +7,18 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.fragments.QuickLogFragment;
-import com.cezarmathe.trackexpenses.storage.Operation;
 import com.cezarmathe.trackexpenses.storage.Storage;
-import com.cezarmathe.trackexpenses.storage.StorageDate;
-import com.cezarmathe.trackexpenses.storage.StorageTableRow;
+import com.cezarmathe.trackexpenses.storage.types.Operation;
+import com.cezarmathe.trackexpenses.storage.types.Time;
+import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.Currency;
 
-public class Dashboard extends Activity implements QuickLogFragment.OnFragmentInteractionListener {
+public class Dashboard extends Activity implements QuickLogFragment.OnFragmentInteractionListener, Storage.OnStorageEventListener {
 
 //    Activity variables
     public  static final String TAG                 = "Dashboard";
@@ -56,8 +57,8 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
 //    --------------------
 
 //    Storage variables
-    private Storage storage;
-    private Defaults        defaults;
+    private Storage     storage;
+    private Defaults    defaults;
 //    --------------------
 
 //    Quick log fragment variables
@@ -71,9 +72,9 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
 
     private Double      quickLogAmount;
     private Currency    quickLogCurrency;
-    private StorageDate quickLogDate;
+    private Time quickLogTime;
     private String      quickLogNotes;
-    private Operation   quickLogOperation;
+    private Operation quickLogOperation;
 //    --------------------
 
 //    Activity methods
@@ -84,6 +85,9 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
 
         Log.i(TAG, "load defaults");
         defaults = Defaults.newInstance(this);
+
+        Log.i(TAG, "initialize storage");
+        storage = Storage.newInstace(this);
 
         Log.i(TAG, "initialize view objects");
         navigationView = findViewById(R.id.bottom_navigation_view);
@@ -96,7 +100,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
             quickLogAmount      =                       savedInstanceState.getDouble(ARG_QUICK_LOG_AMOUNT,      defaults.QUICK_LOG_AMOUNT           );
             quickLogCurrency    = Currency.getInstance( savedInstanceState.getString(ARG_QUICK_LOG_CURRENCY,    defaults.QUICK_LOG_CURRENCY         ));
             quickLogNotes       =                       savedInstanceState.getString(ARG_QUICK_LOG_NOTES,       defaults.QUICK_LOG_NOTES);
-            quickLogOperation   = Operation.fromString( savedInstanceState.getString(ARG_QUICK_LOG_OPERATION,   defaults.QUICK_LOG_OPERATION        ));
+            quickLogOperation   = Operation.parseString( savedInstanceState.getString(ARG_QUICK_LOG_OPERATION,   defaults.QUICK_LOG_OPERATION        ));
             quickLogFragment    = QuickLogFragment.newInstance(
                     quickLogAmount,
                     quickLogCurrency,
@@ -110,7 +114,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
                                             defaults.QUICK_LOG_AMOUNT,
                     Currency.getInstance(   defaults.QUICK_LOG_CURRENCY ),
                                             defaults.QUICK_LOG_NOTES,
-                    Operation.fromString(   defaults.QUICK_LOG_OPERATION)
+                    Operation.parseString(   defaults.QUICK_LOG_OPERATION)
             );
         }
 
@@ -136,8 +140,8 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
                 outState.putString(ARG_QUICK_LOG_NOTES, quickLogNotes);
             }
         }
-        if (quickLogDate != null) {
-            outState.putString(ARG_QUICK_LOG_DATE, quickLogDate.toString());
+        if (quickLogTime != null) {
+            outState.putString(ARG_QUICK_LOG_DATE, quickLogTime.toString());
         }
         if (quickLogCurrency != null) {
             outState.putString(ARG_QUICK_LOG_CURRENCY, quickLogCurrency.toString());
@@ -150,8 +154,9 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
 
 //    Quick log fragment methods
     @Override
-    public void onLogButtonPressed(StorageTableRow dataRow) {
-
+    public void onLogButtonPressed(MoneyTableRow bean) {
+        storage.moneyTable.contents.add(bean);
+        storage.moneyTable.write();
     }
 
     @Override
@@ -167,13 +172,13 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
     }
 
     @Override
-    public void onDateButtonPressed(boolean save, StorageDate date) {
+    public void onDateButtonPressed(boolean save, Time Time) {
         if (save) {
-            quickLogDate = date;
-            Log.i(TAG, "saved " + QuickLogFragment.TAG + " date " + date.toString());
+            quickLogTime = Time;
+            Log.i(TAG, "saved " + QuickLogFragment.TAG + " Time " + Time.toString());
         } else {
-            quickLogDate = null;
-            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " date");
+            quickLogTime = null;
+            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " Time");
         }
     }
 
@@ -195,4 +200,19 @@ public class Dashboard extends Activity implements QuickLogFragment.OnFragmentIn
     }
     //    --------------------
 
+//    Storage methods
+    @Override
+    public void isExternalStorageWritable(boolean is) {
+        if (!is) {
+            Toast.makeText(this, "external storage not writable", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void isExternalStorageReadable(boolean is) {
+        if (!is) {
+            Toast.makeText(this, "external storage not readable", Toast.LENGTH_LONG).show();
+        }
+    }
+//    --------------------
 }

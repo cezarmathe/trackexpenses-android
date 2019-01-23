@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.storage.Operation;
+import com.cezarmathe.trackexpenses.storage.types.Operation;
 
 public class Defaults {
 
