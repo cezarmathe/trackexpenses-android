@@ -12,6 +12,10 @@ public class Defaults {
     public  static final String TAG                 = "Defaults";
     private static final String PREFERENCES_NAME    = "com.cezarmathe.trackexpenses.config.Defaults";
 
+    public static class QuickLogDefaults {
+
+    }
+
     private SharedPreferences preferences;
 
     public int DASHBOARD_DEFAULT_MENU_ITEM = R.id.quicklog_bottom_navigation_item;

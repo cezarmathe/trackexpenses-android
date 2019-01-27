@@ -31,6 +31,10 @@ public enum Operation {
                 return Operation.ADDITION;
             case "-":
                 return Operation.SUBTRACTION;
+            case "ADDITION":
+                return Operation.ADDITION;
+            case "SUBTRACTION":
+                return Operation.SUBTRACTION;
             default:
                 return Operation.SUBTRACTION;
         }

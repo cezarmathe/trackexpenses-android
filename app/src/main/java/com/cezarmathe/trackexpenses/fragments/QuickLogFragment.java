@@ -33,9 +33,10 @@ public class QuickLogFragment extends Fragment {
     private Currency    currency;
     private String      notes;
     private Operation   operation;
+    private Time        time;
 
 //    UI event listener
-    private OnFragmentInteractionListener mListener;
+    private OnQuickLogFragmentInteractionListener mListener;
 
 //    UI elements
     private Button      logButton;
@@ -46,41 +47,53 @@ public class QuickLogFragment extends Fragment {
     private Button      operationButton;
 
     public QuickLogFragment() {
-        Log.d(TAG, "creating new instance");
+        Log.d(TAG, "QuickLogFragment() called");
     }
 
     public static QuickLogFragment newInstance() {
+        Log.d(TAG, "newInstance() called");
         QuickLogFragment fragment = new QuickLogFragment();
+
         Bundle args = new Bundle();
         fragment.setArguments(args);
+
+        Log.i(TAG, "newInstance: created " + TAG);
+        Log.d(TAG, "newInstance() returned: " + fragment);
         return fragment;
     }
 
     public static QuickLogFragment newInstance(Double amount, Currency currency, String notes, Operation operation) {
+        Log.d(TAG, "newInstance() called with: amount = [" + amount + "], currency = [" + currency + "], notes = [" + notes + "], operation = [" + operation + "]");
         QuickLogFragment fragment = new QuickLogFragment();
+
         Bundle args = new Bundle();
         args.putDouble(ARG_AMOUNT,    amount);
         args.putString(ARG_CURRENCY,  currency.toString());
         args.putString(ARG_NOTES,     notes);
         args.putString(ARG_OPERATION, operation.toSign());
         fragment.setArguments(args);
+
+        Log.i(TAG, "newInstance: created " + TAG);
+        Log.d(TAG, "newInstance() returned: " + fragment);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate() called with: savedInstanceState = [" + savedInstanceState + "]");
 
+        Log.d(TAG, "onCreate: initializing defaults");
         defaults = Defaults.newInstance(getActivity());
 
         if (getArguments() != null) {
-            Log.i(TAG, "using passed arguments as parameters");
+            Log.d(TAG, "onCreate: using passed arguments as parameters");
             amount      =                       getArguments().getDouble(ARG_AMOUNT,    defaults.QUICK_LOG_AMOUNT   );
             currency    = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  defaults.QUICK_LOG_CURRENCY ));
             notes       =                       getArguments().getString(ARG_NOTES,     defaults.QUICK_LOG_NOTES    );
             operation   = Operation.parseString(getArguments().getString(ARG_OPERATION, defaults.QUICK_LOG_OPERATION));
         } else {
-            Log.i(TAG, "using defaults as parameters");
+            Log.d(TAG, "onCreate: using defaults as parameters");
             amount      =                       defaults.QUICK_LOG_AMOUNT;
             currency    = Currency.getInstance( defaults.QUICK_LOG_CURRENCY);
             notes       =                       defaults.QUICK_LOG_NOTES;
@@ -90,9 +103,12 @@ public class QuickLogFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.i(TAG, "creating view");
+        Log.d(TAG, "onCreateView() called with: inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
+
+        Log.d(TAG, "onCreateView: inflating layout");
         View view = inflater.inflate(R.layout.fragment_quick_log, container, false);
 
+        Log.d(TAG, "onCreateView: retrieving ui components & initializing them");
         logButton = view.findViewById(R.id.quicklog_log_button);
         logButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,42 +161,48 @@ public class QuickLogFragment extends Fragment {
         operationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onOperationButtonPressed(operationButton.getText().toString());
+                onOperationButtonPressed();
             }
         });
-        Log.i(TAG, "created view");
+        Log.i(TAG, "onCreateView: created view");
+        Log.d(TAG, "onCreateView() returned: " + view);
         return view;
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        Log.d(TAG, "onAttach() called with: context = [" + context + "]");
 
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
+        if (context instanceof OnQuickLogFragmentInteractionListener) {
+            mListener = (OnQuickLogFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+                    + " must implement OnHistoryFragmentInteractionListener");
         }
 
+        Log.i(TAG, "onAttach: attached");
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        Log.d(TAG, "onDetach() called");
         mListener = null;
+        Log.i(TAG, "onDetach: detached");
     }
 
-    public interface OnFragmentInteractionListener {
-        void onLogButtonPressed(MoneyTableRow bean);
-        Currency onCurrencyButtonPressed();
-        Currency onCurrencyButtonLongPressed();
-        void onDateButtonPressed(boolean save, Time Time);
-        void onNotesButtonPressed(boolean save, String notes);
-        void onOperationButtonPressed(Operation operation);
+    public interface OnQuickLogFragmentInteractionListener {
+        void        onLogButtonPressed(MoneyTableRow bean);
+        Currency    onCurrencyButtonPressed();
+        Currency    onCurrencyButtonLongPressed();
+        void        onDateButtonPressed(boolean save, Time Time);
+        void        onNotesButtonPressed(boolean save, String notes);
+        void        onOperationButtonPressed(Operation operation);
     }
 
     public void onLogButtonPressed() {
+        Log.d(TAG, "onLogButtonPressed() called");
         if (mListener != null) {
             Log.d(TAG, "log button pressed");
             MoneyTableRow bean = new MoneyTableRow();
@@ -192,10 +214,13 @@ public class QuickLogFragment extends Fragment {
             bean.setOperation(operation);
 
             mListener.onLogButtonPressed(bean);
+
+            // TODO: 24/01/2019 quality of life changes
         }
     }
 
     public void onCurrencyButtonPressed() {
+        Log.d(TAG, "onCurrencyButtonPressed() called");
         if (mListener != null) {
             Log.d(TAG, "currency button pressed");
             currency = mListener.onCurrencyButtonPressed();
@@ -204,6 +229,7 @@ public class QuickLogFragment extends Fragment {
     }
 
     public void onCurrencyButtonLongPressed() {
+        Log.d(TAG, "onCurrencyButtonLongPressed() called");
         if (mListener != null) {
             Log.d(TAG, "currency button long pressed");
             currency = mListener.onCurrencyButtonLongPressed();
@@ -212,6 +238,7 @@ public class QuickLogFragment extends Fragment {
     }
 
     public void onDateButtonPressed() {
+        Log.d(TAG, "onDateButtonPressed() called");
         if (mListener != null) {
             Log.d(TAG, "date button pressed");
             mListener.onDateButtonPressed(false, Time.newInstance());
@@ -219,30 +246,29 @@ public class QuickLogFragment extends Fragment {
     }
 
     public void onNotesButtonPressed() {
+        Log.d(TAG, "onNotesButtonPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "notes button pressed");
             notes = "This is a test";
-            mListener.onNotesButtonPressed(false, "");
+            mListener.onNotesButtonPressed(false, notes);
         }
     }
 
-    public void onOperationButtonPressed(String text) {
+    public void onOperationButtonPressed() {
+        Log.d(TAG, "onOperationButtonPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "operation button pressed");
-            switch (text) {
+            switch (operationButton.getText().toString()) {
                 case "+":
                     mListener.onOperationButtonPressed(Operation.ADDITION);
                     operationButton.setText(Operation.SUBTRACTION.toSign());
                     operation = Operation.SUBTRACTION;
-                    Log.i(TAG, "switched to " + Operation.SUBTRACTION.toString());
                     break;
                 case "-":
                     mListener.onOperationButtonPressed(Operation.SUBTRACTION);
                     operationButton.setText(Operation.ADDITION.toSign());
                     operation = Operation.ADDITION;
-                    Log.i(TAG, "switched to " + Operation.ADDITION.toString());
                     break;
             }
+            Log.i(TAG, "onOperationButtonPressed: switched to " + operation.toString());
         }
     }
 }

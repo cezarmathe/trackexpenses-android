@@ -2,8 +2,7 @@ package com.cezarmathe.trackexpenses.storage;
 
 import android.util.Log;
 
-import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
-
+import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.io.CsvBeanReader;
 import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.prefs.CsvPreference;
@@ -17,14 +16,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Cezar Mathe <cearmathe @ gmail.com>
  * @version 0.1
  * @see super-csv.github.io/super-csv/index.html
  */
-public abstract class Table {
+public abstract class Table<T> {
 
     /**
      * Provides hooks that are triggered by events related to tables.
@@ -33,18 +31,40 @@ public abstract class Table {
         /**
          * Triggers when the table file fails to be created.
          */
-        void onTableFileCreationFail();
+        void onTableFileCreationFail(String tag, Exception e);
 
         /**
          * Triggers when the reader fails to read the CSV file.
          */
-        void onReadFail();
+        void onReadFail(String tag, Exception e);
 
         /**
          * Triggers when the reader successfully reads the CSV file.
          */
-        void onReadSuccess();
+        void onReadSuccess(String tag);
+
+        /**
+         * Triggers when the writer fails to write
+         */
+        void onWriteFail(String tag, Exception e);
+
+        /**
+         * Triggers when the writer successfully writes the CSV file.
+         */
+        void onWriteSuccess(String tag);
+
+
+        /**
+         * Triggers when the reader fails to open or close
+         */
+        void onReaderMethodFail(String tag, Exception e);
+
+        /**
+         * Triggers when the writer fails to open or close
+         */
+        void onWriterMethodFail(String tag, Exception e);
     }
+
 
     /**
      * Variable used for logging.
@@ -54,12 +74,17 @@ public abstract class Table {
     /**
      * Holds the file name for this table.
      */
-    public      final String    FILE_NAME;
+    protected   final String    FILE_NAME;
 
     /**
      * Container for field naming, must be identical to the bean used as row.
      */
     protected   final String[]  NAME_MAPPING;
+
+    /**
+     * Container for cell processors
+     */
+    protected   final CellProcessor[] PROCESSORS;
 
 
     /**
@@ -76,9 +101,13 @@ public abstract class Table {
                  String[] nameMapping,
                  File parentFolder,
                  ArrayList list,
-                 TableEventHook hook) {
+                 TableEventHook hook,
+                 CellProcessor[] processors) {
 
         this.TAG = tag;
+
+        Log.d(TAG, "Table() called with: tag = [" + tag + "], fileName = [" + fileName + "], nameMapping = [" + nameMapping + "], parentFolder = [" + parentFolder + "], list = [" + list + "], hook = [" + hook + "], processors = [" + processors + "]");
+
         this.FILE_NAME = fileName;
         this.NAME_MAPPING = nameMapping;
 
@@ -91,14 +120,15 @@ public abstract class Table {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "table file " + FILE_NAME + " could not be created, error " + e.toString());
+                hook.onTableFileCreationFail(TAG, e);
             }
         }
 
         this.contents = list;
         this.hook = hook;
+        this.PROCESSORS = processors;
     }
 
-    protected Type beanType;
 
     /**
      * File object representing the actual file on the file system.
@@ -120,18 +150,20 @@ public abstract class Table {
     /**
      * Container for table contents.
      */
-    public      ArrayList<?>    contents;
+    protected   ArrayList<T>    contents;
 
     /**
      * Hook for notifying table events.
      */
     protected   TableEventHook  hook;
 
+
     /**
      * Opens the reader.
      * @throws FileNotFoundException
      */
-    protected void openReader() throws FileNotFoundException {
+    private void openReader() throws FileNotFoundException {
+        Log.d(TAG, "openReader() called");
         this.reader = new CsvBeanReader(
                 new BufferedReader(new FileReader(this.tableFile)),
                 CsvPreference.STANDARD_PREFERENCE
@@ -142,7 +174,8 @@ public abstract class Table {
      * Closes the reader.
      * @throws IOException
      */
-    protected void closeReader() throws IOException {
+    private void closeReader() throws IOException {
+        Log.d(TAG, "closeReader() called");
         if (this.reader != null) {
             this.reader.close();
             this.reader = null;
@@ -153,7 +186,8 @@ public abstract class Table {
      * Opens the writer.
      * @throws IOException
      */
-    protected void openWriter() throws IOException {
+    private void openWriter() throws IOException {
+        Log.d(TAG, "openWriter() called");
         this.writer = new CsvBeanWriter(
                 new BufferedWriter(new FileWriter(this.tableFile)),
                 CsvPreference.STANDARD_PREFERENCE
@@ -164,7 +198,8 @@ public abstract class Table {
      * Closes the writer.
      * @throws IOException
      */
-    protected void closeWriter() throws IOException {
+    private void closeWriter() throws IOException {
+        Log.d(TAG, "closeWriter() called");
         if (this.writer != null) {
             this.writer.close();
             this.writer = null;
@@ -174,22 +209,27 @@ public abstract class Table {
     /**
      * Reads the entire CSV file into the contents table.
      */
-    protected void read() {
+    public void read() {
+        Log.d(TAG, "read() called");
         try {
             openReader();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+            hook.onReaderMethodFail(TAG, e);
             return;
         }
         try {
             contents = readMiddleWare();
+            hook.onReadSuccess(TAG);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+            hook.onReadFail(TAG, e);
         } finally {
             try {
                 closeReader();
             } catch (IOException e) {
                 Log.e(TAG, e.toString());
+                hook.onReaderMethodFail(TAG, e);
             }
         }
     }
@@ -197,45 +237,97 @@ public abstract class Table {
     /**
      * Writes the entire table into the CSV file.
      */
-    protected void write() {
+    public void write() {
+        // TODO: 24/01/2019 rewrite the entire file
+        // TODO: 24/01/2019 add method for partial writing from the file
+        Log.d(TAG, "write() called");
         try {
             openWriter();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+            hook.onWriterMethodFail(TAG, e);
             return;
         }
         try {
             writeMiddleWare(contents);
+            hook.onWriteSuccess(TAG);
         } catch (Exception e) {
             Log.e(TAG, e.toString());
+            hook.onWriteFail(TAG, e);
         } finally {
             try {
                 closeWriter();
             } catch (IOException e) {
                 Log.e(TAG, e.toString());
+                hook.onWriterMethodFail(TAG, e);
             }
         }
     }
+
+    public void write(int begin, int end) {
+        Log.d(TAG, "write() called with: begin = [" + begin + "], end = [" + end + "]");
+    }
+
+    public void write(int index, boolean fromZero) {
+        Log.d(TAG, "write() called with: index = [" + index + "], fromZero = [" + fromZero + "]");
+    }
+
+
+    /**
+     * Returns the size of the table.
+     * @return
+     */
+    public int getSize() {
+        Log.d(TAG, "getSize() called");
+        return contents.size();
+    }
+
+    /**
+     * Checks if the given index is valid or not.
+     * @param index the index that needs to be checked
+     * @return
+     */
+    protected boolean checkIfIndexIsValid(int index) {
+        Log.d(TAG, "checkIfIndexIsValid() called with: index = [" + index + "]");
+        return index >= 0 && index < getSize();
+    }
+
+    /**
+     * Retrieves an object from the contents list.
+     * @param index the index from the contents table
+     * @return the object
+     */
+    public T get(int index) {
+        return contents.get(index);
+    }
+
+    /**
+     * Retrieves the list of rows
+     * @return the contents
+     */
+    public ArrayList<T> get() {
+        return contents;
+    }
+
 
     /**
      * Middleware for reading.
      * @throws IOException
      */
-    protected abstract ArrayList readMiddleWare() throws IOException;
+    protected abstract ArrayList<T> readMiddleWare() throws IOException;
 
     /**
      * Middlware for writing.
      * @param beans the beans that need to be written
      * @throws IOException
      */
-    protected abstract void writeMiddleWare(ArrayList beans) throws IOException;
+    protected abstract void writeMiddleWare(ArrayList<T> beans) throws IOException;
 
     /**
      * Adds a bean to the table.
      * @param bean the bean that needs to be added
-     * @param <T> the bean type
      */
-    public abstract <T extends Object> void add(T bean);
+    public abstract void add(T bean);
 
     /**
      * Removes a bean from the table.
@@ -247,8 +339,7 @@ public abstract class Table {
      * Edits a bean from the table.
      * @param bean the new bean attributes
      * @param index the index of the bean
-     * @param <T> the bean type
      */
-    public abstract <T extends Object> void edit(T bean, int index);
+    public abstract void edit(T bean, int index);
 
 }
