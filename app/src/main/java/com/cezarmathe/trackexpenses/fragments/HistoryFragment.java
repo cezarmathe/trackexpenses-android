@@ -2,69 +2,84 @@ package com.cezarmathe.trackexpenses.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.fragments.dummy.DummyContent;
-import com.cezarmathe.trackexpenses.fragments.dummy.DummyContent.DummyItem;
 import com.cezarmathe.trackexpenses.fragments.history.HistoryRecyclerViewAdapter;
+import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
+
+import java.util.ArrayList;
 
 public class HistoryFragment extends Fragment {
 
+    public static final String TAG = "HistoryFragment";
+
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
+
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    private OnListFragmentInteractionListener mListener;
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
+    private RecyclerView                            mView;
+    private HistoryRecyclerViewAdapter mAdapter;
+    private OnHistoryFragmentInteractionListener    mListener;
+
     public HistoryFragment() {
+        Log.d(TAG, "HistoryFragment() called");
     }
 
     // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static HistoryFragment newInstance(int columnCount) {
+        Log.d(TAG, "newInstance() called with: columnCount = [" + columnCount + "]");
         HistoryFragment fragment = new HistoryFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
+        Log.d(TAG, "newInstance() returned: " + fragment);
+        Log.i(TAG, "newInstance: created");
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate() called with: savedInstanceState = [" + savedInstanceState + "]");
 
         if (getArguments() != null) {
+            Log.d(TAG, "onCreate: using passed arguments as parameters");
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
+        } else {
+            Log.d(TAG, "onCreate: using defaults as parameters");
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView() called with: inflater = [" + inflater + "], container = [" + container + "], savedInstanceState = [" + savedInstanceState + "]");
         View view = inflater.inflate(R.layout.fragment_history, container, false);
 
-        // Set the adapter
+        Log.d(TAG, "onCreateView: setting the mAdapter");
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
+            mView = (RecyclerView) view;
             if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
+                mView.setLayoutManager(new LinearLayoutManager(context));
             } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+                mView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new HistoryRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+            mAdapter = new HistoryRecyclerViewAdapter(mListener.onUpdateListRequested(), mListener);
+            mView.setAdapter(mAdapter);
         }
+        Log.d(TAG, "onCreateView() returned: " + view);
         return view;
     }
 
@@ -72,32 +87,30 @@ public class HistoryFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListFragmentInteractionListener) {
-            mListener = (OnListFragmentInteractionListener) context;
+        Log.d(TAG, "onAttach() called with: context = [" + context + "]");
+        if (context instanceof OnHistoryFragmentInteractionListener) {
+            mListener = (OnHistoryFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
+                    + " must implement OnHistoryFragmentInteractionListener");
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
+        Log.d(TAG, "onDetach() called");
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+    public interface OnHistoryFragmentInteractionListener {
+        boolean                     onItemDeletePressed(MoneyTableRow item);
+        MoneyTableRow               onItemEditPressed(MoneyTableRow item);
+        ArrayList<MoneyTableRow>    onUpdateListRequested();
+    }
+
+    public void updateList() {
+        mAdapter.setList(mListener.onUpdateListRequested());
+        mView.setAdapter(mAdapter);
     }
 }

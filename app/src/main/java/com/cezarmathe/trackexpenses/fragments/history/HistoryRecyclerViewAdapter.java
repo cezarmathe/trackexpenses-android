@@ -1,6 +1,7 @@
 package com.cezarmathe.trackexpenses.fragments.history;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,49 +9,86 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.fragments.HistoryFragment.OnListFragmentInteractionListener;
+import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
+import com.cezarmathe.trackexpenses.fragments.HistoryFragment.OnHistoryFragmentInteractionListener;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.ArrayList;
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.ViewHolder> {
 
-    private final ArrayList<MoneyTableRow> list;
-    private final OnListFragmentInteractionListener mListener;
+    public static final String TAG = "HistoryRecyclerViewAdapter";
 
-    public HistoryRecyclerViewAdapter(ArrayList<MoneyTableRow> items, OnListFragmentInteractionListener listener) {
+    private         ArrayList<MoneyTableRow>                list;
+    private final   OnHistoryFragmentInteractionListener    mListener;
+
+    public HistoryRecyclerViewAdapter(ArrayList<MoneyTableRow> items, HistoryFragment.OnHistoryFragmentInteractionListener listener) {
+        Log.d(TAG, "HistoryRecyclerViewAdapter() called with: items = [" + items + "], listener = [" + listener + "]");
         list = items;
         mListener = listener;
+        Log.i(TAG, "HistoryRecyclerViewAdapter: created");
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder() called with: parent = [" + parent + "], viewType = [" + viewType + "]");
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_history, parent, false);
-        return new ViewHolder(view);
+        ViewHolder v = new ViewHolder(view);
+        Log.d(TAG, "onCreateViewHolder() returned: " + v);
+        return v;
     }
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
+        Log.d(TAG, "onBindViewHolder() called with: holder = [" + holder + "], position = [" + position + "]");
         holder.mItem = list.get(position);
-        holder.mIdView.setText(list.get(position).id);
-        holder.mContentView.setText(list.get(position).content);
 
-        holder.mView.setOnClickListener(new View.OnClickListener() {
+        Log.d(TAG, "onBindViewHolder: setting ui elements"); // FIXME: 28/01/2019
+        holder.operationDisplay.setText(holder.mItem.getOperation().toSign());
+        holder.amountDisplay.setText(String.valueOf(holder.mItem.getAmount()));
+        holder.currencyDisplay.setText(holder.mItem.getCurrency().toString());
+        holder.timeDisplay.setText(holder.mItem.getTime().hour +
+                ":" +
+                holder.mItem.getTime().minute);
+        holder.dateDisplay.setText(holder.mItem.getTime().day +
+                "/" +
+                holder.mItem.getTime().month +
+                "/" +
+                holder.mItem.getTime().year);
+
+        final int pos = position;
+
+        Log.d(TAG, "onBindViewHolder: setting event listeners");
+        holder.editButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                if (null != mListener) {
-                    // Notify the active callbacks interface (the activity, if the
-                    // fragment is attached to one) that an item has been selected.
-                    mListener.onListFragmentInteraction(holder.mItem);
+            public void onClick(View view) {
+                MoneyTableRow mItem = mListener.onItemEditPressed(holder.mItem);
+                if (mItem != null) {
+                    list.set(pos, mItem);
                 }
             }
         });
+
+        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mListener.onItemDeletePressed(holder.mItem)) {
+                    list.remove(pos);
+                }
+            }
+        });
+        Log.d(TAG, "onBindViewHolder: binded");
     }
 
     @Override
     public int getItemCount() {
+        Log.d(TAG, "getItemCount() called");
         return list.size();
+    }
+
+    public void setList(ArrayList<MoneyTableRow> list) {
+        this.list = list;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -67,6 +105,7 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
 
         public ViewHolder(View view) {
             super(view);
+            Log.d(TAG, "ViewHolder() called with: view = [" + view + "]");
             mView = view;
 
             operationDisplay = view.findViewById(R.id.item_history_operation);
@@ -76,10 +115,12 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             dateDisplay      = view.findViewById(R.id.item_history_date);
             editButton       = view.findViewById(R.id.item_history_edit);
             deleteButton     = view.findViewById(R.id.item_history_delete);
+            Log.d(TAG, "ViewHolder: created");
         }
 
         @Override
         public String toString() {
+            Log.d(TAG, "toString() called");
             return super.toString() + " '" + amountDisplay.getText() + "'";
         }
     }

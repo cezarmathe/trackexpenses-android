@@ -11,7 +11,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.cezarmathe.trackexpenses.config.Defaults;
-import com.cezarmathe.trackexpenses.fragments.OldHistoryFragment;
+import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
 import com.cezarmathe.trackexpenses.fragments.QuickLogFragment;
 import com.cezarmathe.trackexpenses.storage.Storage;
 import com.cezarmathe.trackexpenses.storage.Table;
@@ -24,7 +24,7 @@ import java.util.Currency;
 
 public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFragmentInteractionListener,
         Table.TableEventHook,
-        OldHistoryFragment.OnHistoryFragmentInteractionListener {
+        HistoryFragment.OnHistoryFragmentInteractionListener {
 
 //    Activity variables
     public  static final String TAG                 = "Dashboard";
@@ -78,7 +78,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 //    --------------------
 
 //    History fragment variables
-    private OldHistoryFragment historyFragment;
+    private HistoryFragment historyFragment;
 //    --------------------
 
 //    Activity methods
@@ -112,7 +112,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
                     quickLogOperation
             );
 
-            historyFragment = OldHistoryFragment.newInstance(storage.moneyTable.get());
+            historyFragment = HistoryFragment.newInstance(1);
         } else {
             Log.i(TAG, "onCreate: no saved instance state is available");
             activeMenuItem      = defaults.DASHBOARD_DEFAULT_MENU_ITEM;
@@ -123,7 +123,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
                     Operation.parseString(  defaults.QUICK_LOG_OPERATION)
             );
 
-            historyFragment = OldHistoryFragment.newInstance(storage.moneyTable.get());
+            historyFragment = HistoryFragment.newInstance(1);
         }
 
         Log.d(TAG, "onCreate: selecting default frqgment");
