@@ -1,6 +1,7 @@
 package com.cezarmathe.trackexpenses.storage.models;
 
 import com.cezarmathe.trackexpenses.storage.types.Operation;
+import com.cezarmathe.trackexpenses.storage.types.Tag;
 
 import org.joda.time.DateTime;
 
@@ -20,8 +21,9 @@ public class MoneyTableRow implements Serializable {
 
     private Operation   operation;
 
-    private String      tag;
+    private String      tagName;
 
+    private Integer     tagColour;
 
     public MoneyTableRow() {
     }
@@ -72,11 +74,28 @@ public class MoneyTableRow implements Serializable {
     }
 
 
-    public String getTag() {
-        return tag;
+    public Tag getTag() {
+        return new Tag(tagName, tagColour);
     }
 
-    public void setTag(String tag) {
-        this.tag = tag;
+    public void setTag(Tag tag) {
+        this.tagName = tag.getName();
+        this.tagColour = tag.getColor();
+    }
+
+    public String getTagName() {
+        return tagName;
+    }
+
+    public void setTagName(String tagName) {
+        this.tagName = tagName;
+    }
+
+    public Integer getTagColour() {
+        return tagColour;
+    }
+
+    public void setTagColour(Integer tagColour) {
+        this.tagColour = tagColour;
     }
 }

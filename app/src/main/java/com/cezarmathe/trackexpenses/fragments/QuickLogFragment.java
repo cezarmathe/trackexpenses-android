@@ -4,11 +4,15 @@ import android.app.Fragment;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cezarmathe.trackexpenses.R;
@@ -20,6 +24,7 @@ import com.cezarmathe.trackexpenses.storage.types.Tag;
 import org.joda.time.DateTime;
 
 import java.util.Currency;
+import java.util.Objects;
 
 public class QuickLogFragment extends Fragment {
 
@@ -132,6 +137,22 @@ public class QuickLogFragment extends Fragment {
         });
 
         amountEditText = view.findViewById(R.id.quicklog_amount_edittext);
+        amountEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                if (i == EditorInfo.IME_ACTION_DONE) {
+                    onLogButtonPressed();
+                    InputMethodManager inputManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+
+                    if (inputManager != null) {
+                        inputManager.hideSoftInputFromWindow(Objects.requireNonNull(getActivity().getCurrentFocus()).getWindowToken(),
+                                InputMethodManager.HIDE_NOT_ALWAYS);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
 
         operationButton = view.findViewById(R.id.quicklog_operation_button);
         operationButton.setText(operation.toSign() );
@@ -213,6 +234,7 @@ public class QuickLogFragment extends Fragment {
             bean.setDateTime(DateTime.now());
             bean.setNotes(notes);
             bean.setOperation(operation);
+            bean.setTag(tag);
 
             mListener.onLogButtonPressed(bean);
 

@@ -9,6 +9,7 @@ import com.cezarmathe.trackexpenses.storage.cell_processors.ParseOperation;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import org.supercsv.cellprocessor.ParseDouble;
+import org.supercsv.cellprocessor.ParseInt;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 
 import java.io.File;
@@ -20,7 +21,7 @@ public final class MoneyTable extends Table<MoneyTableRow> {
     public MoneyTable(File parentFolder, TableEventHook hook) {
         super("MoneyTable",
                 "money_table.csv",
-                new String[]{"datetime", "operation", "amount", "currency", "notes"},
+                new String[]{"datetime", "operation", "amount", "currency", "notes", "tagName", "tagColour"},
                 parentFolder,
                 new ArrayList<MoneyTableRow>(),
                 hook,
@@ -30,8 +31,12 @@ public final class MoneyTable extends Table<MoneyTableRow> {
                         new ParseDouble(),
                         new ParseCurrency(),
                         null,
+                        null,
+                        new ParseInt()
                 },
                 new CellProcessor[] {
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -70,7 +75,8 @@ public final class MoneyTable extends Table<MoneyTableRow> {
     public void add(MoneyTableRow bean) {
         Log.d(TAG, "add() called with: bean = [" + bean + "]");
         contents.add(bean);
-        write();
+        if (!write())
+            contents.remove(contents.lastIndexOf(bean));
     }
 
     @Override
