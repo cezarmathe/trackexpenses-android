@@ -3,9 +3,9 @@ package com.cezarmathe.trackexpenses.storage.tables;
 import android.util.Log;
 
 import com.cezarmathe.trackexpenses.storage.Table;
+import com.cezarmathe.trackexpenses.storage.cell_processors.ParseDateTime;
 import com.cezarmathe.trackexpenses.storage.cell_processors.ParseCurrency;
 import com.cezarmathe.trackexpenses.storage.cell_processors.ParseOperation;
-import com.cezarmathe.trackexpenses.storage.cell_processors.ParseTime;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import org.supercsv.cellprocessor.ParseDouble;
@@ -13,7 +13,6 @@ import org.supercsv.cellprocessor.ift.CellProcessor;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public final class MoneyTable extends Table<MoneyTableRow> {
@@ -21,15 +20,22 @@ public final class MoneyTable extends Table<MoneyTableRow> {
     public MoneyTable(File parentFolder, TableEventHook hook) {
         super("MoneyTable",
                 "money_table.csv",
-                new String[]{"time", "operation", "amount", "currency", "notes"},
+                new String[]{"datetime", "operation", "amount", "currency", "notes"},
                 parentFolder,
                 new ArrayList<MoneyTableRow>(),
                 hook,
                 new CellProcessor[]{
-                        new ParseTime(),
+                        new ParseDateTime(),
                         new ParseOperation(),
                         new ParseDouble(),
                         new ParseCurrency(),
+                        null,
+                },
+                new CellProcessor[] {
+                        null,
+                        null,
+                        null,
+                        null,
                         null
                 });
         Log.d(TAG, "MoneyTable() called with: parentFolder = [" + parentFolder + "], hook = [" + hook + "]");
@@ -41,7 +47,7 @@ public final class MoneyTable extends Table<MoneyTableRow> {
         Log.d(TAG, "readMiddleWare() called");
         ArrayList<MoneyTableRow> beans = new ArrayList<>();
         MoneyTableRow bean;
-        while ( (bean = reader.read(MoneyTableRow.class, NAME_MAPPING, PROCESSORS)) != null) {
+        while ( (bean = reader.read(MoneyTableRow.class, NAME_MAPPING, READ_PROCESSORS)) != null) {
             beans.add(bean);
             Log.d(TAG, "readMiddleWare: read " + bean);
         }
@@ -54,7 +60,7 @@ public final class MoneyTable extends Table<MoneyTableRow> {
         Log.d(TAG, "writeMiddleWare() called with: beans = [" + beans + "]");
         for (int i = 0; i < beans.size(); i++) {
             final MoneyTableRow bean = beans.get(i);
-            writer.write(bean, NAME_MAPPING);
+            writer.write(bean, NAME_MAPPING, WRITE_PROCESSORS);
             Log.d(TAG, "writeMiddleWare: wrote " + bean);
         }
         Log.d(TAG, "writeMiddleWare() returned");
@@ -68,18 +74,20 @@ public final class MoneyTable extends Table<MoneyTableRow> {
     }
 
     @Override
-    public void remove(int index) {
+    public Boolean remove(int index) {
         Log.d(TAG, "remove() called with: index = [" + index + "]");
         if (checkIfIndexIsValid(index)) {
             contents.remove(index);
         }
+        return rewrite();
     }
 
     @Override
-    public void edit(MoneyTableRow bean, int index) {
+    public MoneyTableRow edit(MoneyTableRow bean, int index) {
         Log.d(TAG, "edit() called with: bean = [" + bean + "], index = [" + index + "]");
         if (checkIfIndexIsValid(index)) {
             contents.set(index, bean);
         }
+        return rewrite() ? contents.get(index) : null;
     }
 }

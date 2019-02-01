@@ -28,7 +28,7 @@ public class HistoryFragment extends Fragment {
     private int mColumnCount = 1;
 
     private RecyclerView                            mView;
-    private HistoryRecyclerViewAdapter mAdapter;
+    private HistoryRecyclerViewAdapter              mAdapter;
     private OnHistoryFragmentInteractionListener    mListener;
 
     public HistoryFragment() {
@@ -94,6 +94,7 @@ public class HistoryFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnHistoryFragmentInteractionListener");
         }
+        updateList();
     }
 
     @Override
@@ -104,8 +105,8 @@ public class HistoryFragment extends Fragment {
     }
 
     public interface OnHistoryFragmentInteractionListener {
-        boolean                     onItemDeletePressed(MoneyTableRow item);
-        MoneyTableRow               onItemEditPressed(MoneyTableRow item);
+        boolean                     onItemDeletePressed(MoneyTableRow item, int index);
+        MoneyTableRow               onItemEditPressed(MoneyTableRow item, int index);
         ArrayList<MoneyTableRow>    onUpdateListRequested();
     }
 

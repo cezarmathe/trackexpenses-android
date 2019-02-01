@@ -13,19 +13,22 @@ import android.widget.EditText;
 import com.cezarmathe.trackexpenses.R;
 import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
-import com.cezarmathe.trackexpenses.storage.types.Time;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
+import org.joda.time.DateTime;
+
+import java.util.Calendar;
 import java.util.Currency;
+import java.util.Locale;
 
 public class QuickLogFragment extends Fragment {
 
     public  static final String TAG             = "QuickLog";
-    private static final String ARG_AMOUNT      = "amount";
-    private static final String ARG_CURRENCY    = "currency";
-    private static final String ARG_NOTES       = "notes";
-    private static final String ARG_OPERATION   = "operation";
-    private static final String ARG_TIME        = "time";
+    private static final String ARG_AMOUNT      = "quick_log_amount";
+    private static final String ARG_CURRENCY    = "quick_log_currency";
+    private static final String ARG_NOTES       = "quick_log_notes";
+    private static final String ARG_OPERATION   = "quick_log_operation";
+    private static final String ARG_DATE_TIME   = "quick_log_date_time";
 
     private Defaults defaults;
 
@@ -33,7 +36,7 @@ public class QuickLogFragment extends Fragment {
     private Currency    currency;
     private String      notes;
     private Operation   operation;
-    private Time        time;
+    private DateTime    dateTime;
 
 //    UI event listener
     private OnQuickLogFragmentInteractionListener mListener;
@@ -83,21 +86,18 @@ public class QuickLogFragment extends Fragment {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate() called with: savedInstanceState = [" + savedInstanceState + "]");
 
-        Log.d(TAG, "onCreate: initializing defaults");
-        defaults = Defaults.newInstance(getActivity());
-
         if (getArguments() != null) {
             Log.d(TAG, "onCreate: using passed arguments as parameters");
-            amount      =                       getArguments().getDouble(ARG_AMOUNT,    defaults.QUICK_LOG_AMOUNT   );
-            currency    = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  defaults.QUICK_LOG_CURRENCY ));
-            notes       =                       getArguments().getString(ARG_NOTES,     defaults.QUICK_LOG_NOTES    );
-            operation   = Operation.parseString(getArguments().getString(ARG_OPERATION, defaults.QUICK_LOG_OPERATION));
+            amount      =                       getArguments().getDouble(ARG_AMOUNT,    Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT));
+            currency    = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY)));
+            notes       =                       getArguments().getString(ARG_NOTES,     Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_NOTES));
+            operation   = Operation.parseString(getArguments().getString(ARG_OPERATION, Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_OPERATION)));
         } else {
             Log.d(TAG, "onCreate: using defaults as parameters");
-            amount      =                       defaults.QUICK_LOG_AMOUNT;
-            currency    = Currency.getInstance( defaults.QUICK_LOG_CURRENCY);
-            notes       =                       defaults.QUICK_LOG_NOTES;
-            operation   = Operation.parseString(defaults.QUICK_LOG_OPERATION);
+            amount      =                       Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT);
+            currency    = Currency.getInstance( Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY));
+            notes       =                       Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_NOTES);
+            operation   = Operation.parseString(Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_OPERATION));
         }
     }
 
@@ -121,7 +121,7 @@ public class QuickLogFragment extends Fragment {
         if (currency != null) {
             currencyButton.setText(currency.toString());
         } else {
-            currencyButton.setText(defaults.QUICK_LOG_CURRENCY);
+            currencyButton.setText(Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY));
         }
         currencyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -154,7 +154,11 @@ public class QuickLogFragment extends Fragment {
         });
 
         amountEditText = view.findViewById(R.id.quicklog_amount_edittext);
-        amountEditText.setText(defaults.QUICK_LOG_AMOUNT.toString());
+        amountEditText.setText(Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString());
+//        amountEditText.setText(String.format(
+//                Locale.forLanguageTag(Defaults.getString(getActivity(), Defaults.ARG_LOCALE)),
+//                Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString()
+//                ));
 
         operationButton = view.findViewById(R.id.quicklog_operation_button);
         operationButton.setText(operation.toSign() );
@@ -196,7 +200,7 @@ public class QuickLogFragment extends Fragment {
         void        onLogButtonPressed(MoneyTableRow bean);
         Currency    onCurrencyButtonPressed();
         Currency    onCurrencyButtonLongPressed();
-        void        onDateButtonPressed(boolean save, Time Time);
+        void        onDateButtonPressed(boolean save, DateTime dateTime);
         void        onNotesButtonPressed(boolean save, String notes);
         void        onOperationButtonPressed(Operation operation);
     }
@@ -209,13 +213,13 @@ public class QuickLogFragment extends Fragment {
 
             bean.setAmount(Double.parseDouble(amountEditText.getText().toString()));
             bean.setCurrency(currency);
-            bean.setTime(Time.newInstance());
+            bean.setDateTime(DateTime.now());
             bean.setNotes(notes);
             bean.setOperation(operation);
 
             mListener.onLogButtonPressed(bean);
 
-            // TODO: 24/01/2019 quality of life changes
+            amountEditText.setText("");
         }
     }
 
@@ -241,7 +245,7 @@ public class QuickLogFragment extends Fragment {
         Log.d(TAG, "onDateButtonPressed() called");
         if (mListener != null) {
             Log.d(TAG, "date button pressed");
-            mListener.onDateButtonPressed(false, Time.newInstance());
+            mListener.onDateButtonPressed(false, DateTime.now());
         }
     }
 

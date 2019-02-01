@@ -15,10 +15,10 @@ public class ParseCurrency extends CellProcessorAdaptor {
     }
 
     @Override
-    public <Currency> Currency execute(Object value, CsvContext context) {
+    public Currency execute(Object value, CsvContext context) {
 
         validateInputNotNull(value, context);
 
-        return (Currency) java.util.Currency.getInstance(value.toString());
+        return Currency.getInstance(value.toString());
     }
 }

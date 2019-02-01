@@ -14,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 /**
@@ -82,10 +81,14 @@ public abstract class Table<T> {
     protected   final String[]  NAME_MAPPING;
 
     /**
-     * Container for cell processors
+     * Container for reading cell processors
      */
-    protected   final CellProcessor[] PROCESSORS;
+    protected   final CellProcessor[] READ_PROCESSORS;
 
+    /**
+     * Container for writing cell processors
+     */
+    protected   final CellProcessor[] WRITE_PROCESSORS;
 
     /**
      * Constructs a new Table.
@@ -102,11 +105,12 @@ public abstract class Table<T> {
                  File parentFolder,
                  ArrayList list,
                  TableEventHook hook,
-                 CellProcessor[] processors) {
+                 CellProcessor[] readingProcessors,
+                 CellProcessor[] writingProcessors) {
 
         this.TAG = tag;
 
-        Log.d(TAG, "Table() called with: tag = [" + tag + "], fileName = [" + fileName + "], nameMapping = [" + nameMapping + "], parentFolder = [" + parentFolder + "], list = [" + list + "], hook = [" + hook + "], processors = [" + processors + "]");
+        Log.d(TAG, "Table() called with: tag = [" + tag + "], fileName = [" + fileName + "], nameMapping = [" + nameMapping + "], parentFolder = [" + parentFolder + "], list = [" + list + "], hook = [" + hook + "], readingProcessors = [" + readingProcessors + "], writingProcessors = [" + writingProcessors + "]");
 
         this.FILE_NAME = fileName;
         this.NAME_MAPPING = nameMapping;
@@ -126,7 +130,8 @@ public abstract class Table<T> {
 
         this.contents = list;
         this.hook = hook;
-        this.PROCESSORS = processors;
+        this.READ_PROCESSORS = readingProcessors;
+        this.WRITE_PROCESSORS = writingProcessors;
     }
 
 
@@ -237,16 +242,14 @@ public abstract class Table<T> {
     /**
      * Writes the entire table into the CSV file.
      */
-    public void write() {
-        // TODO: 24/01/2019 rewrite the entire file
-        // TODO: 24/01/2019 add method for partial writing from the file
+    public Boolean write() {
         Log.d(TAG, "write() called");
         try {
             openWriter();
         } catch (Exception e) {
             Log.e(TAG, e.toString());
             hook.onWriterMethodFail(TAG, e);
-            return;
+            return false;
         }
         try {
             writeMiddleWare(contents);
@@ -254,6 +257,7 @@ public abstract class Table<T> {
         } catch (Exception e) {
             Log.e(TAG, e.toString());
             hook.onWriteFail(TAG, e);
+            return false;
         } finally {
             try {
                 closeWriter();
@@ -262,15 +266,38 @@ public abstract class Table<T> {
                 hook.onWriterMethodFail(TAG, e);
             }
         }
+        return true;
     }
 
-    public void write(int begin, int end) {
-        Log.d(TAG, "write() called with: begin = [" + begin + "], end = [" + end + "]");
+    /**
+     * Rewrite the entire table file.
+     */
+    public Boolean rewrite() {
+        Log.d(TAG, "rewrite() called");
+
+        if (!tableFile.delete()) {
+            Log.e(TAG, "rewrite: failed to delete table file");
+            return false;
+        }
+        try {
+            if (!tableFile.createNewFile()) {
+                Log.e(TAG, "rewrite: failed to recreate table file");
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return write();
     }
 
-    public void write(int index, boolean fromZero) {
-        Log.d(TAG, "write() called with: index = [" + index + "], fromZero = [" + fromZero + "]");
-    }
+//    public void write(int begin, int end) {
+//        Log.d(TAG, "write() called with: begin = [" + begin + "], end = [" + end + "]");
+//    }
+//
+//    public void write(int index, boolean fromZero) {
+//        Log.d(TAG, "write() called with: index = [" + index + "], fromZero = [" + fromZero + "]");
+//    }
 
 
     /**
@@ -333,13 +360,13 @@ public abstract class Table<T> {
      * Removes a bean from the table.
      * @param index the index of the bean
      */
-    public abstract void remove(int index);
+    public abstract Boolean remove(int index);
 
     /**
      * Edits a bean from the table.
      * @param bean the new bean attributes
      * @param index the index of the bean
      */
-    public abstract void edit(T bean, int index);
+    public abstract T edit(T bean, int index);
 
 }

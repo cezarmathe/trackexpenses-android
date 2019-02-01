@@ -17,7 +17,8 @@ import com.cezarmathe.trackexpenses.storage.Storage;
 import com.cezarmathe.trackexpenses.storage.Table;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
-import com.cezarmathe.trackexpenses.storage.types.Time;
+
+import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.Currency;
@@ -49,7 +50,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
                     activeMenuItem = item.getItemId();
                     return true;
                 default:
-                    navigationView.setSelectedItemId(defaults.DASHBOARD_DEFAULT_MENU_ITEM);
+                    navigationView.setSelectedItemId(Defaults.DASHBOARD_DEFAULT_MENU_ITEM);
                     return true;
             }
         }
@@ -58,7 +59,6 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
 //    Storage variables
     private Storage     storage;
-    private Defaults    defaults;
 //    --------------------
 
 //    Quick log fragment variables
@@ -66,13 +66,13 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
     private static final String ARG_QUICK_LOG_AMOUNT    = "quick_log_amount";
     private static final String ARG_QUICK_LOG_CURRENCY  = "quick_log_currency";
-    private static final String ARG_QUICK_LOG_TIME      = "quick_log_time";
+    private static final String ARG_QUICK_LOG_DATE_TIME = "quick_log_date_time";
     private static final String ARG_QUICK_LOG_NOTES     = "quick_log_notes";
     private static final String ARG_QUICK_LOG_OPERATION = "quick_log_operation";
 
     private Double      quickLogAmount;
     private Currency    quickLogCurrency;
-    private Time        quickLogTime;
+    private DateTime    quickLogDateTime;
     private String      quickLogNotes;
     private Operation   quickLogOperation;
 //    --------------------
@@ -88,9 +88,6 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.d(TAG, "onCreate() called with: savedInstanceState = [" + savedInstanceState + "]");
         setContentView(R.layout.activity_dashboard);
 
-        Log.d(TAG, "onCreate: loading defaults");
-        defaults = Defaults.newInstance(this);
-
         Log.d(TAG, "onCreate: initializing storage");
         storage = Storage.newInstance(this);
 
@@ -100,11 +97,11 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
         if (savedInstanceState != null) {
             Log.i(TAG, "onCreate: saved instance state is available");
-            activeMenuItem      =                       savedInstanceState.getInt   (ARG_NAVIGATION_ITEM,       defaults.DASHBOARD_DEFAULT_MENU_ITEM);
-            quickLogAmount      =                       savedInstanceState.getDouble(ARG_QUICK_LOG_AMOUNT,      defaults.QUICK_LOG_AMOUNT           );
-            quickLogCurrency    = Currency.getInstance( savedInstanceState.getString(ARG_QUICK_LOG_CURRENCY,    defaults.QUICK_LOG_CURRENCY         ));
-            quickLogNotes       =                       savedInstanceState.getString(ARG_QUICK_LOG_NOTES,       defaults.QUICK_LOG_NOTES            );
-            quickLogOperation   = Operation.parseString(savedInstanceState.getString(ARG_QUICK_LOG_OPERATION,   defaults.QUICK_LOG_OPERATION        ));
+            activeMenuItem      =                       savedInstanceState.getInt   (ARG_NAVIGATION_ITEM,       Defaults.DASHBOARD_DEFAULT_MENU_ITEM);
+            quickLogAmount      =                       savedInstanceState.getDouble(ARG_QUICK_LOG_AMOUNT,      Defaults.getDouble(this, Defaults.ARG_QUICK_LOG_AMOUNT));
+            quickLogCurrency    = Currency.getInstance( savedInstanceState.getString(ARG_QUICK_LOG_CURRENCY,    Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY)));
+            quickLogNotes       =                       savedInstanceState.getString(ARG_QUICK_LOG_NOTES,       Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION));
+            quickLogOperation   = Operation.parseString(savedInstanceState.getString(ARG_QUICK_LOG_OPERATION,   Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION)));
             quickLogFragment    = QuickLogFragment.newInstance(
                     quickLogAmount,
                     quickLogCurrency,
@@ -115,12 +112,12 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
             historyFragment = HistoryFragment.newInstance(1);
         } else {
             Log.i(TAG, "onCreate: no saved instance state is available");
-            activeMenuItem      = defaults.DASHBOARD_DEFAULT_MENU_ITEM;
+            activeMenuItem      = Defaults.DASHBOARD_DEFAULT_MENU_ITEM;
             quickLogFragment    = QuickLogFragment.newInstance(
-                                            defaults.QUICK_LOG_AMOUNT,
-                    Currency.getInstance(   defaults.QUICK_LOG_CURRENCY ),
-                                            defaults.QUICK_LOG_NOTES,
-                    Operation.parseString(  defaults.QUICK_LOG_OPERATION)
+                                            Defaults.getDouble(this, Defaults.ARG_QUICK_LOG_AMOUNT),
+                    Currency.getInstance(   Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY)),
+                                            Defaults.getString(this, Defaults.ARG_QUICK_LOG_NOTES),
+                    Operation.parseString(  Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION))
             );
 
             historyFragment = HistoryFragment.newInstance(1);
@@ -148,8 +145,8 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
                 outState.putString(ARG_QUICK_LOG_NOTES, quickLogNotes);
             }
         }
-        if (quickLogTime != null) {
-            outState.putString(ARG_QUICK_LOG_TIME, quickLogTime.toString());
+        if (quickLogDateTime != null) {
+            outState.putString(ARG_QUICK_LOG_DATE_TIME, quickLogDateTime.toString());
         }
         if (quickLogCurrency != null) {
             outState.putString(ARG_QUICK_LOG_CURRENCY, quickLogCurrency.toString());
@@ -189,9 +186,10 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 //    Quick log fragment methods
     @Override
     public void onLogButtonPressed(MoneyTableRow bean) {
-        Log.d(TAG, "onLogButtonPressed() called with: bean = [" + bean + "]");
+        Log.d(TAG, "onLogButtonPr" +
+                "essed() called with: bean = [" + bean + "]");
         storage.moneyTable.add(bean);
-        historyFragment.updateList();
+//        historyFragment.updateList();
     }
 
     @Override
@@ -209,14 +207,14 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
     }
 
     @Override
-    public void onDateButtonPressed(boolean save, Time Time) {
-        Log.d(TAG, "onDateButtonPressed() called with: save = [" + save + "], Time = [" + Time + "]");
+    public void onDateButtonPressed(boolean save, DateTime dateTime) {
+        Log.d(TAG, "onDateButtonPressed() called with: save = [" + save + "], DateTime = [" + dateTime + "]");
         if (save) {
-            quickLogTime = Time;
-            Log.i(TAG, "saved " + QuickLogFragment.TAG + " Time " + Time.toString());
+            quickLogDateTime = dateTime;
+            Log.i(TAG, "saved " + QuickLogFragment.TAG + " DateTime " + dateTime.toString());
         } else {
-            quickLogTime = null;
-            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " Time");
+            quickLogDateTime = null;
+            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " DateTime");
         }
     }
 
@@ -242,15 +240,15 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
 //    History fragment methods
     @Override
-    public boolean onItemDeletePressed(MoneyTableRow item) {
+    public boolean onItemDeletePressed(MoneyTableRow item, int index) {
         Log.d(TAG, "onItemDeletePressed() called with: item = [" + item + "]");
-        return false;
+        return storage.moneyTable.remove(index);
     }
 
     @Override
-    public MoneyTableRow onItemEditPressed(MoneyTableRow item) {
+    public MoneyTableRow onItemEditPressed(MoneyTableRow item, int index) {
         Log.d(TAG, "onItemEditPressed() called with: item = [" + item + "]");
-        return null;
+        return storage.moneyTable.edit(item, index);
     }
 
     @Override

@@ -1,29 +1,38 @@
 package com.cezarmathe.trackexpenses.storage.models;
 
-import com.cezarmathe.trackexpenses.storage.types.Time;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
 
+import org.joda.time.DateTime;
+
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Currency;
 
 public class MoneyTableRow implements Serializable {
 
-    private double      amount;
+    private Double      amount;
+
     private String      notes;
-    private Time        time;
+
+    private DateTime    dateTime;
+
     private Currency    currency;
+
     private Operation   operation;
+
 
     public MoneyTableRow() {
     }
 
-    public double getAmount() {
+
+    public Double getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(Double amount) {
         this.amount = amount;
     }
+
 
     public String getNotes() {
         return notes;
@@ -33,13 +42,15 @@ public class MoneyTableRow implements Serializable {
         this.notes = notes;
     }
 
-    public Time getTime() {
-        return time;
+
+    public DateTime getDateTime() {
+        return dateTime;
     }
 
-    public void setTime(Time time) {
-        this.time = time;
+    public void setDateTime(DateTime dateTime) {
+        this.dateTime = dateTime;
     }
+
 
     public Currency getCurrency() {
         return currency;
@@ -48,6 +59,7 @@ public class MoneyTableRow implements Serializable {
     public void setCurrency(Currency currency) {
         this.currency = currency;
     }
+
 
     public Operation getOperation() {
         return operation;

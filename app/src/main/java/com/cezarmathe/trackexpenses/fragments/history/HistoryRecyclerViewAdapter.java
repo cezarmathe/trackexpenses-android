@@ -14,6 +14,7 @@ import com.cezarmathe.trackexpenses.fragments.HistoryFragment.OnHistoryFragmentI
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.ViewHolder> {
 
@@ -40,32 +41,34 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         Log.d(TAG, "onBindViewHolder() called with: holder = [" + holder + "], position = [" + position + "]");
         holder.mItem = list.get(position);
 
-        Log.d(TAG, "onBindViewHolder: setting ui elements"); // FIXME: 28/01/2019
+        Log.d(TAG, "onBindViewHolder: setting ui elements");
         holder.operationDisplay.setText(holder.mItem.getOperation().toSign());
         holder.amountDisplay.setText(String.valueOf(holder.mItem.getAmount()));
         holder.currencyDisplay.setText(holder.mItem.getCurrency().toString());
-        holder.timeDisplay.setText(holder.mItem.getTime().hour +
-                ":" +
-                holder.mItem.getTime().minute);
-        holder.dateDisplay.setText(holder.mItem.getTime().day +
-                "/" +
-                holder.mItem.getTime().month +
-                "/" +
-                holder.mItem.getTime().year);
 
-        final int pos = position;
+        holder.timeDisplay.setText(new StringBuilder()
+                .append(holder.mItem.getDateTime().hourOfDay())
+                .append(":")
+                .append(holder.mItem.getDateTime().minuteOfHour()));
+
+        holder.dateDisplay.setText(new StringBuilder()
+                .append(holder.mItem.getDateTime().dayOfMonth())
+                .append("/")
+                .append(holder.mItem.getDateTime().monthOfYear())
+                .append("/")
+                .append(holder.mItem.getDateTime().year()));
 
         Log.d(TAG, "onBindViewHolder: setting event listeners");
         holder.editButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MoneyTableRow mItem = mListener.onItemEditPressed(holder.mItem);
+                MoneyTableRow mItem = mListener.onItemEditPressed(holder.mItem, holder.getAdapterPosition());
                 if (mItem != null) {
-                    list.set(pos, mItem);
+                    list.set(holder.getAdapterPosition(), mItem);
                 }
             }
         });
@@ -73,8 +76,8 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         holder.deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mListener.onItemDeletePressed(holder.mItem)) {
-                    list.remove(pos);
+                if (mListener.onItemDeletePressed(holder.mItem, holder.getAdapterPosition())) {
+                    list.remove(holder.getAdapterPosition());
                 }
             }
         });
