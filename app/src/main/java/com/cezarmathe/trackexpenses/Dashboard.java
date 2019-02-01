@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.config.UserConfig;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
 import com.cezarmathe.trackexpenses.fragments.QuickLogFragment;
@@ -32,6 +31,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 //    Activity variables
     public  static final String TAG                 = "Dashboard";
     private static final String ARG_NAVIGATION_ITEM = "navigation_item_id";
+    private static final int    DEFAULT_MENU_ITEM   = R.id.quicklog_bottom_navigation_item;
 
     private BottomNavigationView navigationView;
     private int activeMenuItem;
@@ -52,7 +52,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
                     activeMenuItem = item.getItemId();
                     return true;
                 default:
-                    navigationView.setSelectedItemId(Defaults.DASHBOARD_DEFAULT_MENU_ITEM);
+                    navigationView.setSelectedItemId(DEFAULT_MENU_ITEM);
                     return true;
             }
         }
@@ -66,18 +66,6 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
 //    Quick log fragment variables
     private QuickLogFragment quickLogFragment;
-
-    private static final String ARG_QUICK_LOG_AMOUNT    = "quick_log_amount";
-    private static final String ARG_QUICK_LOG_CURRENCY  = "quick_log_currency";
-    private static final String ARG_QUICK_LOG_DATE_TIME = "quick_log_date_time";
-    private static final String ARG_QUICK_LOG_NOTES     = "quick_log_notes";
-    private static final String ARG_QUICK_LOG_OPERATION = "quick_log_operation";
-
-    private Double      quickLogAmount;
-    private Currency    quickLogCurrency;
-    private DateTime    quickLogDateTime;
-    private String      quickLogNotes;
-    private Operation   quickLogOperation;
 //    --------------------
 
 //    History fragment variables
@@ -101,32 +89,16 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         navigationView = findViewById(R.id.bottom_navigation_view);
         navigationView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener);
 
+        Log.d(TAG, "onCreate: creating fragments");
+        quickLogFragment = QuickLogFragment.newInstance(userConfig);
+        historyFragment = HistoryFragment.newInstance(userConfig);
+
         if (savedInstanceState != null) {
             Log.i(TAG, "onCreate: saved instance state is available");
-            activeMenuItem      =                       savedInstanceState.getInt   (ARG_NAVIGATION_ITEM,       Defaults.DASHBOARD_DEFAULT_MENU_ITEM);
-            quickLogAmount      =                       savedInstanceState.getDouble(ARG_QUICK_LOG_AMOUNT,      Defaults.getDouble(this, Defaults.ARG_QUICK_LOG_AMOUNT));
-            quickLogCurrency    = Currency.getInstance( savedInstanceState.getString(ARG_QUICK_LOG_CURRENCY,    Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY)));
-            quickLogNotes       =                       savedInstanceState.getString(ARG_QUICK_LOG_NOTES,       Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION));
-            quickLogOperation   = Operation.parseString(savedInstanceState.getString(ARG_QUICK_LOG_OPERATION,   Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION)));
-            quickLogFragment    = QuickLogFragment.newInstance(
-                    quickLogAmount,
-                    quickLogCurrency,
-                    quickLogNotes,
-                    quickLogOperation
-            );
-
-            historyFragment = HistoryFragment.newInstance(1);
+            activeMenuItem = savedInstanceState.getInt(ARG_NAVIGATION_ITEM, DEFAULT_MENU_ITEM);
         } else {
             Log.i(TAG, "onCreate: no saved instance state is available");
-            activeMenuItem      = Defaults.DASHBOARD_DEFAULT_MENU_ITEM;
-            quickLogFragment    = QuickLogFragment.newInstance(
-                                            Defaults.getDouble(this, Defaults.ARG_QUICK_LOG_AMOUNT),
-                    Currency.getInstance(   Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY)),
-                                            Defaults.getString(this, Defaults.ARG_QUICK_LOG_NOTES),
-                    Operation.parseString(  Defaults.getString(this, Defaults.ARG_QUICK_LOG_OPERATION))
-            );
-
-            historyFragment = HistoryFragment.newInstance(1);
+            activeMenuItem      = DEFAULT_MENU_ITEM;
         }
 
         Log.d(TAG, "onCreate: selecting default fragment");
@@ -139,24 +111,6 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.d(TAG, "onSaveInstanceState() called with: outState = [" + outState + "]");
 
         outState.putInt(ARG_NAVIGATION_ITEM, activeMenuItem);
-
-        if (quickLogAmount != null) {
-            outState.putDouble(ARG_QUICK_LOG_AMOUNT, quickLogAmount);
-        }
-        if (quickLogOperation != null) {
-            outState.putString(ARG_QUICK_LOG_OPERATION, quickLogOperation.toSign());
-        }
-        if (quickLogNotes != null) {
-            if (!quickLogNotes.equals("")) {
-                outState.putString(ARG_QUICK_LOG_NOTES, quickLogNotes);
-            }
-        }
-        if (quickLogDateTime != null) {
-            outState.putString(ARG_QUICK_LOG_DATE_TIME, quickLogDateTime.toString());
-        }
-        if (quickLogCurrency != null) {
-            outState.putString(ARG_QUICK_LOG_CURRENCY, quickLogCurrency.toString());
-        }
 
         Log.i(TAG, "onSaveInstanceState: saved instance state");
     }
@@ -210,8 +164,10 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
     @Override
     public Currency onCurrencyButtonPressed() {
         Log.d(TAG, "onCurrencyButtonPressed() called");
+
+        Currency quickLogCurrency = UserConfig.DEFAULT_CURRENCY;
+
         if (userConfig.getCurrencies().size() == 0) {
-            quickLogCurrency = Currency.getInstance(Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY));
             return quickLogCurrency;
         }
         if (userConfig.getLastCurrencyIndex() == userConfig.getCurrencies().size() - 1) {
@@ -219,7 +175,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         } else {
             userConfig.setLastCurrencyIndex(userConfig.getLastCurrencyIndex() + 1);
         }
-        quickLogCurrency = Currency.getInstance(userConfig.getCurrencies().get(userConfig.getLastCurrencyIndex()));
+        quickLogCurrency = userConfig.getCurrencies().get(userConfig.getLastCurrencyIndex());
         Log.d(TAG, "onCurrencyButtonPressed() returned: " + quickLogCurrency);
         return quickLogCurrency;
     }
@@ -268,19 +224,13 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
     @Override
     public void onOperationButtonPressed(Operation operation) {
         Log.d(TAG, "onOperationButtonPressed() called with: operation = [" + operation + "]");
-        quickLogOperation = operation;
-        Log.i(TAG, "saved " + QuickLogFragment.TAG + " operation " + operation.toString());
     }
 
     @Override
     public Tag onTagButtonPressed(Tag old) {
-        Tag quickLogTag = new Tag();
-        if (userConfig == null) {
-            quickLogTag.setName(Defaults.getString(this, Defaults.ARG_QUICK_LOG_TAG));
-            return quickLogTag;
-        }
+        Tag quickLogTag = UserConfig.DEFAULT_TAG;
+
         if (userConfig.getTags().size() == 0) {
-            quickLogTag.setName(Defaults.getString(this, Defaults.ARG_QUICK_LOG_TAG));
             return quickLogTag;
         }
         if (userConfig.getLastCurrencyIndex() == userConfig.getCurrencies().size() - 1) {

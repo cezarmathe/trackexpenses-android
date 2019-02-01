@@ -9,13 +9,11 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment.OnHistoryFragmentInteractionListener;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Locale;
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.ViewHolder> {

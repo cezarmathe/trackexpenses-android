@@ -2,7 +2,6 @@ package com.cezarmathe.trackexpenses.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,30 +9,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.config.Defaults;
+import com.cezarmathe.trackexpenses.config.UserConfig;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 import com.cezarmathe.trackexpenses.storage.types.Tag;
 
 import org.joda.time.DateTime;
 
-import java.util.Calendar;
 import java.util.Currency;
-import java.util.Locale;
 
 public class QuickLogFragment extends Fragment {
 
     public  static final String TAG             = "QuickLog";
-    private static final String ARG_AMOUNT      = "quick_log_amount";
-    private static final String ARG_CURRENCY    = "quick_log_currency";
-    private static final String ARG_NOTES       = "quick_log_notes";
-    private static final String ARG_OPERATION   = "quick_log_operation";
-    private static final String ARG_DATE_TIME   = "quick_log_date_time";
-    private static final String ARG_TAG         = "quick_log_tag";
 
-    private double      amount;
     private Currency    currency;
     private String      notes;
     private Operation   operation;
@@ -68,44 +59,28 @@ public class QuickLogFragment extends Fragment {
         return fragment;
     }
 
-    public static QuickLogFragment newInstance(Double amount, Currency currency, String notes, Operation operation) {
-        Log.d(TAG, "newInstance() called with: amount = [" + amount + "], currency = [" + currency + "], notes = [" + notes + "], operation = [" + operation + "]");
-        QuickLogFragment fragment = new QuickLogFragment();
+    public static QuickLogFragment newInstance(UserConfig userConfig) {
+        Log.d(TAG, "newInstance() called with: userConfig = [" + userConfig + "]");
+        QuickLogFragment quickLogFragment = new QuickLogFragment();
 
-        Bundle args = new Bundle();
-        args.putDouble(ARG_AMOUNT,    amount);
-        args.putString(ARG_CURRENCY,  currency.toString());
-        args.putString(ARG_NOTES,     notes);
-        args.putString(ARG_OPERATION, operation.toSign());
-        fragment.setArguments(args);
+        quickLogFragment.tag = userConfig.getTags().size() != 0 ?
+                userConfig.getTags().get(userConfig.getLastCurrencyIndex()) :
+                UserConfig.DEFAULT_TAG;
+        quickLogFragment.dateTime = userConfig.getSavedDateTime();
+        quickLogFragment.operation = UserConfig.DEFAULT_OPERATION;
+        quickLogFragment.currency = userConfig.getCurrencies().size() != 0 ?
+                userConfig.getCurrencies().get(userConfig.getLastCurrencyIndex()) :
+                UserConfig.DEFAULT_CURRENCY;
+        quickLogFragment.notes = userConfig.getSavedNotes();
 
-        Log.i(TAG, "newInstance: created " + TAG);
-        Log.d(TAG, "newInstance() returned: " + fragment);
-        return fragment;
+        Log.d(TAG, "newInstance() returned: " + quickLogFragment);
+        return quickLogFragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate() called with: savedInstanceState = [" + savedInstanceState + "]");
-
-        if (getArguments() != null) {
-            Log.d(TAG, "onCreate: using passed arguments as parameters");
-            amount      =                       getArguments().getDouble(ARG_AMOUNT,    Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT));
-            currency    = Currency.getInstance( getArguments().getString(ARG_CURRENCY,  Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY)));
-            notes       =                       getArguments().getString(ARG_NOTES,     Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_NOTES));
-            operation   = Operation.parseString(getArguments().getString(ARG_OPERATION, Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_OPERATION)));
-        } else {
-            Log.d(TAG, "onCreate: using defaults as parameters");
-            amount      =                       Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT);
-            currency    = Currency.getInstance( Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY));
-            notes       =                       Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_NOTES);
-            operation   = Operation.parseString(Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_OPERATION));
-        }
-        tag = new Tag();
-        tag.setColor(new Color());
-        tag.setName("no tag");
-        dateTime = DateTime.now();
     }
 
     @Override
@@ -125,11 +100,7 @@ public class QuickLogFragment extends Fragment {
         });
 
         currencyButton = view.findViewById(R.id.quicklog_currency_button);
-        if (currency != null) {
-            currencyButton.setText(currency.toString());
-        } else {
-            currencyButton.setText(Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_CURRENCY));
-        }
+        currencyButton.setText(currency.toString());
         currencyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -161,7 +132,6 @@ public class QuickLogFragment extends Fragment {
         });
 
         amountEditText = view.findViewById(R.id.quicklog_amount_edittext);
-        amountEditText.setHint(Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString());
 
         operationButton = view.findViewById(R.id.quicklog_operation_button);
         operationButton.setText(operation.toSign() );
@@ -230,6 +200,12 @@ public class QuickLogFragment extends Fragment {
     public void onLogButtonPressed() {
         Log.d(TAG, "onLogButtonPressed() called");
         if (mListener != null) {
+
+            if (amountEditText.getText().toString().equals("")) {
+                Toast.makeText(getContext(), "You need to enter a number.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             MoneyTableRow bean = new MoneyTableRow();
 
             bean.setAmount(Double.parseDouble(amountEditText.getText().toString()));
@@ -270,7 +246,7 @@ public class QuickLogFragment extends Fragment {
     public void onNotesButtonPressed() {
         Log.d(TAG, "onNotesButtonPressed() called");
         if (mListener != null) {
-            mListener.onNotesButtonPressed(notes);
+            notes = mListener.onNotesButtonPressed(notes);
         }
     }
 

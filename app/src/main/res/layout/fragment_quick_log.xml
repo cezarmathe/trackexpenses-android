@@ -61,6 +61,7 @@
         android:layout_marginBottom="8dp"
         android:ems="10"
         android:gravity="center_horizontal"
+        android:hint="@string/quick_log_amount_edit_text_hint"
         android:inputType="numberDecimal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

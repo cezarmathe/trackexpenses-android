@@ -3,7 +3,6 @@ package com.cezarmathe.trackexpenses.fragments;
 import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -12,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.cezarmathe.trackexpenses.R;
-import com.cezarmathe.trackexpenses.config.Defaults;
+import com.cezarmathe.trackexpenses.config.UserConfig;
 import com.cezarmathe.trackexpenses.fragments.history.HistoryRecyclerViewAdapter;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
@@ -23,11 +22,7 @@ public class HistoryFragment extends Fragment {
 
     public static final String TAG = "HistoryFragment";
 
-    // TODO: Customize parameter argument names
-    private static final String ARG_COLUMN_COUNT = "column-count";
-
-    // TODO: Customize parameters
-    private int mColumnCount = 1;
+    private Locale locale;
 
     private RecyclerView                            mView;
     private HistoryRecyclerViewAdapter              mAdapter;
@@ -37,13 +32,15 @@ public class HistoryFragment extends Fragment {
         Log.d(TAG, "HistoryFragment() called");
     }
 
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
-    public static HistoryFragment newInstance(int columnCount) {
-        Log.d(TAG, "newInstance() called with: columnCount = [" + columnCount + "]");
+    public static HistoryFragment newInstance(UserConfig userConfig) {
+        Log.d(TAG, "newInstance() called with: userConfig = [" + userConfig + "]");
         HistoryFragment fragment = new HistoryFragment();
+
+        fragment.locale = userConfig.getLocale() != null ?
+                userConfig.getLocale() :
+                UserConfig.DEFAULT_LOCALE;
+
         Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
         Log.d(TAG, "newInstance() returned: " + fragment);
         Log.i(TAG, "newInstance: created");
@@ -57,7 +54,6 @@ public class HistoryFragment extends Fragment {
 
         if (getArguments() != null) {
             Log.d(TAG, "onCreate: using passed arguments as parameters");
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         } else {
             Log.d(TAG, "onCreate: using defaults as parameters");
         }
@@ -73,12 +69,11 @@ public class HistoryFragment extends Fragment {
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             mView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                mView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                mView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            mAdapter = new HistoryRecyclerViewAdapter(mListener.onUpdateListRequested(), mListener, Locale.forLanguageTag(Defaults.getString(getActivity(), Defaults.ARG_LOCALE)));
+            mView.setLayoutManager(new LinearLayoutManager(context));
+            mAdapter = new HistoryRecyclerViewAdapter(mListener.onUpdateListRequested(),
+                    mListener,
+                    locale
+            );
             mView.setAdapter(mAdapter);
         }
         updateList();

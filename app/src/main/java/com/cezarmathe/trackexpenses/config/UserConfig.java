@@ -1,11 +1,14 @@
 package com.cezarmathe.trackexpenses.config;
 
+import android.graphics.Path;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.cezarmathe.trackexpenses.storage.types.Operation;
 import com.cezarmathe.trackexpenses.storage.types.Tag;
 import com.google.gson.Gson;
-import com.google.gson.annotations.Expose;
+
+import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,10 +16,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Currency;
+import java.util.Locale;
 
 public class UserConfig {
-
-    // TODO: 01/02/2019 move from Defaults to UserConfig
 
     /**
      * The user config file name
@@ -28,54 +31,36 @@ public class UserConfig {
     /**
      * Fields
      */
-    private ArrayList<Tag>   tags;
-    private Integer             lastTagIndex;
 
-    private ArrayList<String>   currencies;
+//    General
+    private Locale locale;
+    public static final transient Locale DEFAULT_LOCALE = Locale.US;
+
+//    QuickLog
+    private ArrayList<Tag>  tags;
+    private Integer         lastTagIndex;
+    public static final transient Integer   DEFAULT_COLOR = 0;
+    public static final transient Tag       DEFAULT_TAG = new Tag("-", DEFAULT_COLOR);
+
+    public static final transient Operation DEFAULT_OPERATION = Operation.SUBTRACTION;
+
+    private ArrayList<Currency> currencies;
     private Integer             lastCurrencyIndex;
+    public static final transient Currency DEFAULT_CURRENCY = Currency.getInstance(DEFAULT_LOCALE);
+
+    private DateTime                savedDateTime;
+    private String                  savedNotes;
 
 
-    /**
-     * POJO methods
-     */
-    public ArrayList<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(ArrayList<Tag> tags) {
-        this.tags = tags;
-    }
-
-    public Integer getLastTagIndex() {
-        return lastTagIndex;
-    }
-
-    public void setLastTagIndex(Integer lastTagIndex) {
-        this.lastTagIndex = lastTagIndex;
-    }
-
-    public ArrayList<String> getCurrencies() {
-        return currencies;
-    }
-
-    public void setCurrencies(ArrayList<String> currencies) {
-        this.currencies = currencies;
-    }
-
-    public Integer getLastCurrencyIndex() {
-        return lastCurrencyIndex;
-    }
-
-    public void setLastCurrencyIndex(Integer lastCurrencyIndex) {
-        this.lastCurrencyIndex = lastCurrencyIndex;
-    }
 
     public UserConfig() {
         Log.d(TAG, "UserConfig() called");
         tags = new ArrayList<>();
+        lastTagIndex = 0;
         currencies = new ArrayList<>();
         lastCurrencyIndex = 0;
-        lastTagIndex = 0;
+        savedDateTime = DateTime.now();
+        savedNotes = "";
     }
 
     /**
@@ -132,5 +117,65 @@ public class UserConfig {
             Log.d(TAG, "read() returned: " + userConfig);
             return userConfig;
         }
+    }
+
+    /**
+     * Methods
+     */
+
+    public ArrayList<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(ArrayList<Tag> tags) {
+        this.tags = tags;
+    }
+
+    public Integer getLastTagIndex() {
+        return lastTagIndex;
+    }
+
+    public void setLastTagIndex(Integer lastTagIndex) {
+        this.lastTagIndex = lastTagIndex;
+    }
+
+    public ArrayList<Currency> getCurrencies() {
+        return currencies;
+    }
+
+    public void setCurrencies(ArrayList<Currency> currencies) {
+        this.currencies = currencies;
+    }
+
+    public Integer getLastCurrencyIndex() {
+        return lastCurrencyIndex;
+    }
+
+    public void setLastCurrencyIndex(Integer lastCurrencyIndex) {
+        this.lastCurrencyIndex = lastCurrencyIndex;
+    }
+
+    public DateTime getSavedDateTime() {
+        return savedDateTime;
+    }
+
+    public void setSavedDateTime(DateTime savedDateTime) {
+        this.savedDateTime = savedDateTime;
+    }
+
+    public String getSavedNotes() {
+        return savedNotes;
+    }
+
+    public void setSavedNotes(String savedNotes) {
+        this.savedNotes = savedNotes;
+    }
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
     }
 }
