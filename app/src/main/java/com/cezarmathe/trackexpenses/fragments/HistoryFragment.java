@@ -12,10 +12,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.cezarmathe.trackexpenses.R;
+import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.fragments.history.HistoryRecyclerViewAdapter;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class HistoryFragment extends Fragment {
 
@@ -76,9 +78,10 @@ public class HistoryFragment extends Fragment {
             } else {
                 mView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            mAdapter = new HistoryRecyclerViewAdapter(mListener.onUpdateListRequested(), mListener);
+            mAdapter = new HistoryRecyclerViewAdapter(mListener.onUpdateListRequested(), mListener, Locale.forLanguageTag(Defaults.getString(getActivity(), Defaults.ARG_LOCALE)));
             mView.setAdapter(mAdapter);
         }
+        updateList();
         Log.d(TAG, "onCreateView() returned: " + view);
         return view;
     }
@@ -94,7 +97,6 @@ public class HistoryFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnHistoryFragmentInteractionListener");
         }
-        updateList();
     }
 
     @Override

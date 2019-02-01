@@ -20,6 +20,8 @@ public class MoneyTableRow implements Serializable {
 
     private Operation   operation;
 
+    private String      tag;
+
 
     public MoneyTableRow() {
     }
@@ -67,5 +69,14 @@ public class MoneyTableRow implements Serializable {
 
     public void setOperation(Operation operation) {
         this.operation = operation;
+    }
+
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 }

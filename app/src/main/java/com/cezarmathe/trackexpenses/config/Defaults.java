@@ -24,22 +24,22 @@ public final class Defaults {
         return activity.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
     }
 
-    // TODO: 01/02/2019 add proper args and string resources
     /**
      * Args
      */
 //    General
     public static final Pair<String, Integer> ARG_TIME_ZONE = makeArgPair("time_zone", R.string.app_name);
-    public static final Pair<String, Integer> ARG_LOCALE = makeArgPair("locale", R.string.app_name);
+    public static final Pair<String, Integer> ARG_LOCALE = makeArgPair("locale", R.string.locale);
 
     //    Dashboard
-    public static final Pair<String, Integer> ARG_DASHBOARD_MENU_ITEM = makeArgPair("dashboard_menu_item", R.string.app_name);
+//    public static final Pair<String, Integer> ARG_DASHBOARD_MENU_ITEM = makeArgPair("dashboard_menu_item", R.string.app_name);
 
     //    QuickLog
     public static final Pair<String, Integer> ARG_QUICK_LOG_CURRENCY    = makeArgPair("quick_log_currency", R.string.quick_log_currency);
     public static final Pair<String, Integer> ARG_QUICK_LOG_AMOUNT      = makeArgPair("quick_log_amount", R.string.quick_log_amount);
     public static final Pair<String, Integer> ARG_QUICK_LOG_NOTES       = makeArgPair("quick_log_notes", R.string.quick_log_notes);
     public static final Pair<String, Integer> ARG_QUICK_LOG_OPERATION   = makeArgPair("quick_log_operation", R.string.quick_log_operation);
+    public static final Pair<String, Integer> ARG_QUICK_LOG_TAG         = makeArgPair("quick_log_tag", R.string.quick_log_tag);
 
 //    History
 

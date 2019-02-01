@@ -9,12 +9,14 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.cezarmathe.trackexpenses.R;
+import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment.OnHistoryFragmentInteractionListener;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Locale;
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.ViewHolder> {
 
@@ -22,11 +24,13 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
 
     private         ArrayList<MoneyTableRow>                list;
     private final   OnHistoryFragmentInteractionListener    mListener;
+    private final   Locale                                  locale;
 
-    public HistoryRecyclerViewAdapter(ArrayList<MoneyTableRow> items, HistoryFragment.OnHistoryFragmentInteractionListener listener) {
+    public HistoryRecyclerViewAdapter(ArrayList<MoneyTableRow> items, HistoryFragment.OnHistoryFragmentInteractionListener listener, Locale locale) {
         Log.d(TAG, "HistoryRecyclerViewAdapter() called with: items = [" + items + "], listener = [" + listener + "]");
         list = items;
         mListener = listener;
+        this.locale = locale;
         Log.i(TAG, "HistoryRecyclerViewAdapter: created");
     }
 
@@ -46,29 +50,28 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         holder.mItem = list.get(position);
 
         Log.d(TAG, "onBindViewHolder: setting ui elements");
+
         holder.operationDisplay.setText(holder.mItem.getOperation().toSign());
-        holder.amountDisplay.setText(String.valueOf(holder.mItem.getAmount()));
+        holder.amountDisplay.setText(String.format(
+                locale,
+                "%.2f",
+                holder.mItem.getAmount()
+        ));
         holder.currencyDisplay.setText(holder.mItem.getCurrency().toString());
-
-        holder.timeDisplay.setText(new StringBuilder()
-                .append(holder.mItem.getDateTime().hourOfDay())
-                .append(":")
-                .append(holder.mItem.getDateTime().minuteOfHour()));
-
-        holder.dateDisplay.setText(new StringBuilder()
-                .append(holder.mItem.getDateTime().dayOfMonth())
-                .append("/")
-                .append(holder.mItem.getDateTime().monthOfYear())
-                .append("/")
-                .append(holder.mItem.getDateTime().year()));
+        holder.timeDisplay.setText(
+                holder.mItem.getDateTime().toString("HH:mm", locale)
+        );
+        holder.dateDisplay.setText(
+                holder.mItem.getDateTime().toString("dd.MM.yyyy")
+        );
 
         Log.d(TAG, "onBindViewHolder: setting event listeners");
         holder.editButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MoneyTableRow mItem = mListener.onItemEditPressed(holder.mItem, holder.getAdapterPosition());
-                if (mItem != null) {
-                    list.set(holder.getAdapterPosition(), mItem);
+                MoneyTableRow item = mListener.onItemEditPressed(holder.mItem, holder.getAdapterPosition());
+                if (item != null) {
+                    list.set(holder.getAdapterPosition(), item);
                 }
             }
         });
@@ -77,10 +80,12 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             @Override
             public void onClick(View view) {
                 if (mListener.onItemDeletePressed(holder.mItem, holder.getAdapterPosition())) {
-                    list.remove(holder.getAdapterPosition());
+                    notifyItemRemoved(holder.getAdapterPosition());
+                    notifyItemRangeChanged(holder.getAdapterPosition(), list.size());
                 }
             }
         });
+
         Log.d(TAG, "onBindViewHolder: binded");
     }
 
@@ -118,6 +123,7 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             dateDisplay      = view.findViewById(R.id.item_history_date);
             editButton       = view.findViewById(R.id.item_history_edit);
             deleteButton     = view.findViewById(R.id.item_history_delete);
+
             Log.d(TAG, "ViewHolder: created");
         }
 
@@ -126,5 +132,6 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             Log.d(TAG, "toString() called");
             return super.toString() + " '" + amountDisplay.getText() + "'";
         }
+
     }
 }

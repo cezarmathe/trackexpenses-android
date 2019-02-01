@@ -2,7 +2,7 @@
     <string name="app_name">Track Expenses</string>
 
     <!--General-->
-
+    <string name="locale">en-US</string>
 
     <!--Dashboard-->
 
@@ -12,6 +12,7 @@
     <string name="quick_log_currency">RON</string>
     <string name="quick_log_notes"></string>
     <string name="quick_log_operation">SUBTRACTION</string>
+    <string name="quick_log_tag">-</string>
 
     <!--History-->
 

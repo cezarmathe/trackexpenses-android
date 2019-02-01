@@ -11,12 +11,14 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.cezarmathe.trackexpenses.config.Defaults;
+import com.cezarmathe.trackexpenses.config.UserConfig;
 import com.cezarmathe.trackexpenses.fragments.HistoryFragment;
 import com.cezarmathe.trackexpenses.fragments.QuickLogFragment;
 import com.cezarmathe.trackexpenses.storage.Storage;
 import com.cezarmathe.trackexpenses.storage.Table;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
+import com.cezarmathe.trackexpenses.storage.types.Tag;
 
 import org.joda.time.DateTime;
 
@@ -59,6 +61,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
 //    Storage variables
     private Storage     storage;
+    private UserConfig  userConfig;
 //    --------------------
 
 //    Quick log fragment variables
@@ -90,6 +93,9 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
         Log.d(TAG, "onCreate: initializing storage");
         storage = Storage.newInstance(this);
+
+        Log.d(TAG, "onCreate: loading user configs");
+        userConfig = UserConfig.read(storage.getFile(UserConfig.FILE_NAME));
 
         Log.d(TAG, "onCreate: initializing view objects");
         navigationView = findViewById(R.id.bottom_navigation_view);
@@ -123,7 +129,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
             historyFragment = HistoryFragment.newInstance(1);
         }
 
-        Log.d(TAG, "onCreate: selecting default frqgment");
+        Log.d(TAG, "onCreate: selecting default fragment");
         navigationView.setSelectedItemId(activeMenuItem);
     }
 
@@ -181,53 +187,82 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.i(TAG, "changeFragment: changed fragment to " + fragment.getClass().toString());
     }
 
-//    --------------------
+    @Override
+    protected void onPause() {
+        super.onPause();
+        UserConfig.write(userConfig, storage.getFile(UserConfig.FILE_NAME));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        userConfig = UserConfig.read(storage.getFile(UserConfig.FILE_NAME));
+    }
+    //    --------------------
 
 //    Quick log fragment methods
     @Override
     public void onLogButtonPressed(MoneyTableRow bean) {
-        Log.d(TAG, "onLogButtonPr" +
-                "essed() called with: bean = [" + bean + "]");
+        Log.d(TAG, "onLogButtonPressed() called with: bean = [" + bean + "]");
         storage.moneyTable.add(bean);
-//        historyFragment.updateList();
     }
 
     @Override
     public Currency onCurrencyButtonPressed() {
         Log.d(TAG, "onCurrencyButtonPressed() called");
-        quickLogCurrency = Currency.getInstance("RON");
+        if (userConfig.getCurrencies().size() == 0) {
+            quickLogCurrency = Currency.getInstance(Defaults.getString(this, Defaults.ARG_QUICK_LOG_CURRENCY));
+            return quickLogCurrency;
+        }
+        if (userConfig.getLastCurrencyIndex() == userConfig.getCurrencies().size() - 1) {
+            userConfig.setLastCurrencyIndex(0);
+        } else {
+            userConfig.setLastCurrencyIndex(userConfig.getLastCurrencyIndex() + 1);
+        }
+        quickLogCurrency = Currency.getInstance(userConfig.getCurrencies().get(userConfig.getLastCurrencyIndex()));
+        Log.d(TAG, "onCurrencyButtonPressed() returned: " + quickLogCurrency);
         return quickLogCurrency;
     }
 
     @Override
-    public Currency onCurrencyButtonLongPressed() {
-        Log.d(TAG, "onCurrencyButtonLongPressed() called");
-        quickLogCurrency = Currency.getInstance("RON");
-        return quickLogCurrency;
+    public Currency onCurrencyButtonLongPressed(Currency old) {
+        Log.d(TAG, "onCurrencyButtonLongPressed() called with: old = [" + old + "]");
+
+        // TODO: 01/02/2019 make a popup for selecting the currency
+
+        return old;
     }
 
     @Override
-    public void onDateButtonPressed(boolean save, DateTime dateTime) {
-        Log.d(TAG, "onDateButtonPressed() called with: save = [" + save + "], DateTime = [" + dateTime + "]");
-        if (save) {
-            quickLogDateTime = dateTime;
-            Log.i(TAG, "saved " + QuickLogFragment.TAG + " DateTime " + dateTime.toString());
-        } else {
-            quickLogDateTime = null;
-            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " DateTime");
-        }
+    public DateTime onDateButtonPressed(DateTime old) {
+        Log.d(TAG, "onDateButtonPressed() called with: old = [" + old + "]");
+
+        // TODO: 01/02/2019 make a popup for selecting another date and time
+
+//        if (save) {
+//            quickLogDateTime = dateTime;
+//            Log.i(TAG, "saved " + QuickLogFragment.TAG + " DateTime " + dateTime.toString());
+//        } else {
+//            quickLogDateTime = null;
+//            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " DateTime");
+//        }
+        return old;
     }
 
     @Override
-    public void onNotesButtonPressed(boolean save, String notes) {
-        Log.d(TAG, "onNotesButtonPressed() called with: save = [" + save + "], notes = [" + notes + "]");
-        if (save) {
-            quickLogNotes = notes;
-            Log.i(TAG, "saved " + QuickLogFragment.TAG + " notes " + notes);
-        } else {
-            quickLogNotes = "";
-            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " notes");
-        }
+    public String onNotesButtonPressed(String old) {
+        Log.d(TAG, "onNotesButtonPressed() called with: old = [" + old + "]");
+
+        // TODO: 01/02/2019 make a popup for writing the notes
+
+//        if (save) {
+//            quickLogNotes = notes;
+//            Log.i(TAG, "saved " + QuickLogFragment.TAG + " notes " + notes);
+//        } else {
+//            quickLogNotes = "";
+//            Log.i(TAG, "unsaved " + QuickLogFragment.TAG + " notes");
+//        }
+        return old;
     }
 
     @Override
@@ -235,6 +270,34 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.d(TAG, "onOperationButtonPressed() called with: operation = [" + operation + "]");
         quickLogOperation = operation;
         Log.i(TAG, "saved " + QuickLogFragment.TAG + " operation " + operation.toString());
+    }
+
+    @Override
+    public Tag onTagButtonPressed(Tag old) {
+        Tag quickLogTag = new Tag();
+        if (userConfig == null) {
+            quickLogTag.setName(Defaults.getString(this, Defaults.ARG_QUICK_LOG_TAG));
+            return quickLogTag;
+        }
+        if (userConfig.getTags().size() == 0) {
+            quickLogTag.setName(Defaults.getString(this, Defaults.ARG_QUICK_LOG_TAG));
+            return quickLogTag;
+        }
+        if (userConfig.getLastCurrencyIndex() == userConfig.getCurrencies().size() - 1) {
+            userConfig.setLastCurrencyIndex(0);
+        } else {
+            userConfig.setLastCurrencyIndex(userConfig.getLastCurrencyIndex() + 1);
+        }
+        quickLogTag = userConfig.getTags().get(userConfig.getLastTagIndex());
+        return quickLogTag;
+    }
+
+    @Override
+    public Tag onTagButtonLongPressed(Tag old) {
+
+        // TODO: 01/02/2019 make a popup for selecting the tag or adding/removing tags
+
+        return old;
     }
 //    --------------------
 
@@ -256,7 +319,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.d(TAG, "onUpdateListRequested() called");
         return storage.moneyTable.get();
     }
-//    --------------------
+    //    --------------------
 
 //    Table event hooks
     @Override

@@ -7,6 +7,8 @@ import android.util.Log;
 import com.cezarmathe.trackexpenses.storage.tables.MoneyTable;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Storage {
 
@@ -70,5 +72,9 @@ public class Storage {
         Log.i(TAG, "newInstance: created Storage");
         Log.d(TAG, "newInstance() returned: " + storage);
         return storage;
+    }
+
+    public File getFile(String filename) {
+        return new File(storageDir, filename);
     }
 }

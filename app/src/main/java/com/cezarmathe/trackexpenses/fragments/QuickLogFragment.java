@@ -2,6 +2,7 @@ package com.cezarmathe.trackexpenses.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,6 +15,7 @@ import com.cezarmathe.trackexpenses.R;
 import com.cezarmathe.trackexpenses.config.Defaults;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
 import com.cezarmathe.trackexpenses.storage.models.MoneyTableRow;
+import com.cezarmathe.trackexpenses.storage.types.Tag;
 
 import org.joda.time.DateTime;
 
@@ -29,14 +31,14 @@ public class QuickLogFragment extends Fragment {
     private static final String ARG_NOTES       = "quick_log_notes";
     private static final String ARG_OPERATION   = "quick_log_operation";
     private static final String ARG_DATE_TIME   = "quick_log_date_time";
-
-    private Defaults defaults;
+    private static final String ARG_TAG         = "quick_log_tag";
 
     private double      amount;
     private Currency    currency;
     private String      notes;
     private Operation   operation;
     private DateTime    dateTime;
+    private Tag         tag;
 
 //    UI event listener
     private OnQuickLogFragmentInteractionListener mListener;
@@ -48,6 +50,7 @@ public class QuickLogFragment extends Fragment {
     private Button      notesButton;
     private EditText    amountEditText;
     private Button      operationButton;
+    private Button      tagButton;
 
     public QuickLogFragment() {
         Log.d(TAG, "QuickLogFragment() called");
@@ -99,6 +102,10 @@ public class QuickLogFragment extends Fragment {
             notes       =                       Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_NOTES);
             operation   = Operation.parseString(Defaults.getString(getActivity(), Defaults.ARG_QUICK_LOG_OPERATION));
         }
+        tag = new Tag();
+        tag.setColor(new Color());
+        tag.setName("no tag");
+        dateTime = DateTime.now();
     }
 
     @Override
@@ -133,7 +140,7 @@ public class QuickLogFragment extends Fragment {
             @Override
             public boolean onLongClick(View view) {
                 onCurrencyButtonLongPressed();
-                return false;
+                return true;
             }
         });
 
@@ -154,11 +161,7 @@ public class QuickLogFragment extends Fragment {
         });
 
         amountEditText = view.findViewById(R.id.quicklog_amount_edittext);
-        amountEditText.setText(Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString());
-//        amountEditText.setText(String.format(
-//                Locale.forLanguageTag(Defaults.getString(getActivity(), Defaults.ARG_LOCALE)),
-//                Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString()
-//                ));
+        amountEditText.setHint(Defaults.getDouble(getActivity(), Defaults.ARG_QUICK_LOG_AMOUNT).toString());
 
         operationButton = view.findViewById(R.id.quicklog_operation_button);
         operationButton.setText(operation.toSign() );
@@ -168,6 +171,23 @@ public class QuickLogFragment extends Fragment {
                 onOperationButtonPressed();
             }
         });
+
+        tagButton = view.findViewById(R.id.quicklog_tag_button);
+        tagButton.setText(tag.getName());
+        tagButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onTagButtonPressed();
+            }
+        });
+        tagButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                onTagButtonLongPressed();
+                return true;
+            }
+        });
+
         Log.i(TAG, "onCreateView: created view");
         Log.d(TAG, "onCreateView() returned: " + view);
         return view;
@@ -199,16 +219,17 @@ public class QuickLogFragment extends Fragment {
     public interface OnQuickLogFragmentInteractionListener {
         void        onLogButtonPressed(MoneyTableRow bean);
         Currency    onCurrencyButtonPressed();
-        Currency    onCurrencyButtonLongPressed();
-        void        onDateButtonPressed(boolean save, DateTime dateTime);
-        void        onNotesButtonPressed(boolean save, String notes);
+        Currency    onCurrencyButtonLongPressed(Currency old);
+        DateTime    onDateButtonPressed(DateTime old);
+        String      onNotesButtonPressed(String old);
         void        onOperationButtonPressed(Operation operation);
+        Tag         onTagButtonPressed(Tag old);
+        Tag         onTagButtonLongPressed(Tag old);
     }
 
     public void onLogButtonPressed() {
         Log.d(TAG, "onLogButtonPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "log button pressed");
             MoneyTableRow bean = new MoneyTableRow();
 
             bean.setAmount(Double.parseDouble(amountEditText.getText().toString()));
@@ -226,7 +247,6 @@ public class QuickLogFragment extends Fragment {
     public void onCurrencyButtonPressed() {
         Log.d(TAG, "onCurrencyButtonPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "currency button pressed");
             currency = mListener.onCurrencyButtonPressed();
             currencyButton.setText(currency.toString());
         }
@@ -235,8 +255,7 @@ public class QuickLogFragment extends Fragment {
     public void onCurrencyButtonLongPressed() {
         Log.d(TAG, "onCurrencyButtonLongPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "currency button long pressed");
-            currency = mListener.onCurrencyButtonLongPressed();
+            currency = mListener.onCurrencyButtonLongPressed(currency);
             currencyButton.setText(currency.toString());
         }
     }
@@ -244,16 +263,14 @@ public class QuickLogFragment extends Fragment {
     public void onDateButtonPressed() {
         Log.d(TAG, "onDateButtonPressed() called");
         if (mListener != null) {
-            Log.d(TAG, "date button pressed");
-            mListener.onDateButtonPressed(false, DateTime.now());
+            dateTime = mListener.onDateButtonPressed(dateTime);
         }
     }
 
     public void onNotesButtonPressed() {
         Log.d(TAG, "onNotesButtonPressed() called");
         if (mListener != null) {
-            notes = "This is a test";
-            mListener.onNotesButtonPressed(false, notes);
+            mListener.onNotesButtonPressed(notes);
         }
     }
 
@@ -273,6 +290,20 @@ public class QuickLogFragment extends Fragment {
                     break;
             }
             Log.i(TAG, "onOperationButtonPressed: switched to " + operation.toString());
+        }
+    }
+
+    public void onTagButtonPressed() {
+        Log.d(TAG, "onTagButtonPressed() called");
+        if (mListener != null) {
+            tag = mListener.onTagButtonPressed(tag);
+        }
+    }
+
+    public void onTagButtonLongPressed() {
+        Log.d(TAG, "onTagButtonLongPressed() called");
+        if (mListener != null) {
+            tag = mListener.onTagButtonLongPressed(tag);
         }
     }
 }
