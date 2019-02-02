@@ -2,32 +2,20 @@
 <android.support.constraint.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    style="@style/DarkTheme.Fragment">
 
     <Button
         android:id="@+id/quicklog_operation_button"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
         android:text="+"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/quicklog_amount_edittext"
-        app:layout_constraintVertical_bias="0.13999999" />
-
+        app:layout_constraintVertical_bias="0.13999999"/>
     <Button
         android:id="@+id/quicklog_tag_button"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
         android:text="TAG"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -38,12 +26,7 @@
 
     <Button
         android:id="@+id/quicklog_currency_button"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
         android:text="USD"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -54,8 +37,8 @@
 
     <EditText
         android:id="@+id/quicklog_amount_edittext"
-        android:layout_width="138dp"
-        android:layout_height="42dp"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
@@ -63,6 +46,7 @@
         android:gravity="center_horizontal"
         android:hint="@string/quick_log_amount_edit_text_hint"
         android:inputType="numberDecimal"
+        style="@style/DarkTheme.EditText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -71,12 +55,8 @@
 
     <Button
         android:id="@+id/quicklog_log_button"
-        android:layout_width="138dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
+        android:layout_width="100dp"
         android:text="Log"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -86,12 +66,8 @@
 
     <Button
         android:id="@+id/quicklog_notes_button"
-        android:layout_width="79dp"
-        android:layout_height="46dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
+        android:layout_width="75dp"
         android:text="Notes"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/quicklog_amount_edittext"
@@ -102,12 +78,8 @@
 
     <Button
         android:id="@+id/quicklog_date_button"
-        android:layout_width="79dp"
-        android:layout_height="46dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        style="@style/DarkTheme.QuickLogButton"
+        android:layout_width="75dp"
         android:text="Time"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -118,15 +90,16 @@
 
     <TextView
         android:id="@+id/quicklog_title_textview"
-        android:layout_width="338dp"
-        android:layout_height="58dp"
+        style="@style/DarkTheme.TextView"
+        android:layout_width="350dp"
+        android:layout_height="75dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:text="Quick log"
         android:textAlignment="center"
-        android:textSize="36sp"
+        android:textSize="48sp"
         app:layout_constraintBottom_toTopOf="@+id/quicklog_amount_edittext"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

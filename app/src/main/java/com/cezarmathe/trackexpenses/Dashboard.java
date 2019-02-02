@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.annotation.AnimatorRes;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.util.Log;
@@ -41,12 +42,20 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
             switch(item.getItemId()) {
                 case R.id.quicklog_bottom_navigation_item:
+                    if (activeMenuItem == R.id.quicklog_bottom_navigation_item) {
+                        changeFragment(quickLogFragment);
+                        return true;
+                    }
+                    if (activeMenuItem == R.id.history_bottom_navigation_item) {
+                        changeFragment(quickLogFragment, historyFragment, R.animator.slide_in_right, R.animator.slide_out_left);
+                    }
                     activeMenuItem = item.getItemId();
-                    changeFragment(quickLogFragment);
                     return true;
                 case R.id.history_bottom_navigation_item:
+                    if (activeMenuItem == R.id.quicklog_bottom_navigation_item) {
+                        changeFragment(historyFragment, quickLogFragment, R.animator.slide_in_left, R.animator.slide_out_right);
+                    }
                     activeMenuItem = item.getItemId();
-                    changeFragment(historyFragment);
                     return true;
                 case R.id.statistics_bottom_navigation_item:
                     activeMenuItem = item.getItemId();
@@ -84,6 +93,12 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
 
         Log.d(TAG, "onCreate: loading user configs");
         userConfig = UserConfig.read(storage.getFile(UserConfig.FILE_NAME));
+//        ArrayList<Currency> a = userConfig.getCurrencies();
+//        a.add(Currency.getInstance("RON"));
+//        ArrayList<Tag> b = userConfig.getTags();
+//        b.add(new Tag("Parents", 1234));
+//        UserConfig.write(userConfig, storage.getFile(UserConfig.FILE_NAME));
+
 
         Log.d(TAG, "onCreate: initializing view objects");
         navigationView = findViewById(R.id.bottom_navigation_view);
@@ -115,30 +130,46 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         Log.i(TAG, "onSaveInstanceState: saved instance state");
     }
 
-    private void changeFragment(Fragment fragment) {
-        Log.d(TAG, "changeFragment() called with: fragment = [" + fragment + "]");
-        if (fragment.isVisible()) {
-            Log.i(TAG, "changeFragment: fragment " + fragment.getClass().toString() + " already visible");
+    private void changeFragment(Fragment newFragment, Fragment oldFragment, @AnimatorRes Integer in, @AnimatorRes Integer out) {
+        Log.d(TAG, "changeFragment() called with: fragment = [" + newFragment + "], in = [" + in + "], out = [" + out + "]");
+        if (newFragment.isVisible()) {
+            Log.i(TAG, "changeFragment: fragment " + newFragment.getClass().toString() + " already visible");
             return;
         }
 
         FragmentTransaction ft = getFragmentManager().beginTransaction();
-
-        if (quickLogFragment.isVisible()) {
-            ft.detach(quickLogFragment);
-        }
-        if (historyFragment.isVisible()) {
-            ft.detach(historyFragment);
-        }
-
-        if (!fragment.isAdded()) {
-            Log.d(TAG, "changeFragment: adding fragment");
-            ft.add(R.id.fragment_container, fragment);
-        }
-
-        ft.attach(fragment);
+//        if (quickLogFragment.isVisible()) {
+//            ft.detach(quickLogFragment);
+//        }
+//        if (historyFragment.isVisible()) {
+//            ft.detach(historyFragment);
+//        }
+//
+//        if (!fragment.isAdded()) {
+//            Log.d(TAG, "changeFragment: adding fragment");
+//            ft.add(R.id.fragment_container, fragment);
+//        }
+        ft.setCustomAnimations(in, out);
+        ft.replace(R.id.fragment_container, newFragment);
+        ft.detach(oldFragment);
         ft.commit();
-        Log.i(TAG, "changeFragment: changed fragment to " + fragment.getClass().toString());
+        Log.i(TAG, "changeFragment: changed fragment to " + newFragment.getClass().toString());
+
+//        oldFragment.setExitTransition(new Fade().setDuration(1000).setStartDelay(500));
+//        newFragment.setEnterTransition(new Fade().setDuration(1500).setStartDelay(750));
+//        ft.replace(R.id.fragment_container, newFragment);
+//        ft.commitAllowingStateLoss();
+    }
+
+    private void changeFragment(Fragment fragment) {
+        Log.d(TAG, "changeFragment() called with: fragment = [" + fragment + "]");
+        if (fragment.isVisible()) {
+            return;
+        }
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.setCustomAnimations(R.animator.enter_from_down, R.animator.leave_to_top);
+        ft.add(R.id.fragment_container, fragment);
+        ft.commit();
     }
 
     @Override
@@ -152,6 +183,32 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
         super.onResume();
         userConfig = UserConfig.read(storage.getFile(UserConfig.FILE_NAME));
     }
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        float x1 = 0, x2;
+//        switch(event.getAction())
+//        {
+//            case MotionEvent.ACTION_DOWN:
+//                x1 = event.getX();
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                x2 = event.getX();
+//                float deltaX = x2 - x1;
+//                if (deltaX > 100) {
+//                    if (activeMenuItem == R.id.quicklog_bottom_navigation_item) {
+//                        navigationView.setSelectedItemId(R.id.history_bottom_navigation_item);
+//                    }
+//                } else if (deltaX < -100) {
+//                    if (activeMenuItem == R.id.history_bottom_navigation_item) {
+//                        navigationView.setSelectedItemId(R.id.quicklog_bottom_navigation_item);
+//                    }
+//                }
+//                break;
+//        }
+//        return super.onTouchEvent(event);
+//    }
+
     //    --------------------
 
 //    Quick log fragment methods

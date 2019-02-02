@@ -2,6 +2,9 @@ package com.cezarmathe.trackexpenses.storage.types;
 
 import android.graphics.Color;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Tag {
 
     private String  name;
@@ -9,10 +12,6 @@ public class Tag {
     private Integer color;
 
     public Tag() {}
-
-    public Tag(String name) {
-        this.name = name;
-    }
 
     public Tag(String name, Integer color) {
         this.name = name;
@@ -33,5 +32,13 @@ public class Tag {
 
     public void setColor(Integer color) {
         this.color = color;
+    }
+
+    public int[] getColorRgb() {
+        int[] rgb = new int[3];
+        rgb[0] = color / 65536;
+        rgb[1] = color / 256 % 256;
+        rgb[2] = color % 256;
+        return rgb;
     }
 }

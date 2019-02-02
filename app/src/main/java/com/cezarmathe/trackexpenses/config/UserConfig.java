@@ -48,8 +48,8 @@ public class UserConfig {
     private Integer             lastCurrencyIndex;
     public static final transient Currency DEFAULT_CURRENCY = Currency.getInstance(DEFAULT_LOCALE);
 
-    private DateTime                savedDateTime;
-    private String                  savedNotes;
+    private DateTime    savedDateTime;
+    private String      savedNotes;
 
 
 

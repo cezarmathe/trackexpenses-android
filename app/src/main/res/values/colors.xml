@@ -3,4 +3,19 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+
+    <!--<color name="primary_light">#DBD8C3</color>-->
+    <!--<color name="primaryDark_light">#031727</color>-->
+    <!--<color name="accent_light">#88F9D4</color>-->
+
+    <!--<color name="accent_dark">#B1B5CC</color>-->
+
+    <!--new-->
+    <color name="primary">#2F3036</color>
+    <color name="primaryDark">#121212</color>
+    <color name="accent">#FFE56E</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="button">#7C7F78</color>
+
 </resources>

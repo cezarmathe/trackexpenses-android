@@ -5,6 +5,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -23,6 +25,7 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
     private         ArrayList<MoneyTableRow>                list;
     private final   OnHistoryFragmentInteractionListener    mListener;
     private final   Locale                                  locale;
+    private         int                                     lastPosition = -1;
 
     public HistoryRecyclerViewAdapter(ArrayList<MoneyTableRow> items, HistoryFragment.OnHistoryFragmentInteractionListener listener, Locale locale) {
         Log.d(TAG, "HistoryRecyclerViewAdapter() called with: items = [" + items + "], listener = [" + listener + "]");
@@ -84,6 +87,8 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             }
         });
 
+        setAnimation(holder.mView, position);
+
         Log.d(TAG, "onBindViewHolder: binded");
     }
 
@@ -130,6 +135,15 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             Log.d(TAG, "toString() called");
             return super.toString() + " '" + amountDisplay.getText() + "'";
         }
+    }
 
+    private void setAnimation(View viewToAnimate, int position)
+    {
+        if (position > lastPosition)
+        {
+            Animation animation = AnimationUtils.loadAnimation(viewToAnimate.getContext(), android.R.anim.slide_in_left);
+            viewToAnimate.startAnimation(animation);
+            lastPosition = position;
+        }
     }
 }
