@@ -1,19 +1,16 @@
 package com.cezarmathe.trackexpenses.storage.types;
 
-import android.graphics.Color;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class Tag {
 
     private String  name;
 
-    private Integer color;
+    private Color color;
 
     public Tag() {}
 
-    public Tag(String name, Integer color) {
+    public Tag(String name, Color color) {
         this.name = name;
         this.color = color;
     }
@@ -26,19 +23,11 @@ public class Tag {
         this.name = name;
     }
 
-    public Integer getColor() {
+    public Color getColor() {
         return color;
     }
 
-    public void setColor(Integer color) {
+    public void setColor(Color color) {
         this.color = color;
-    }
-
-    public int[] getColorRgb() {
-        int[] rgb = new int[3];
-        rgb[0] = color / 65536;
-        rgb[1] = color / 256 % 256;
-        rgb[2] = color % 256;
-        return rgb;
     }
 }

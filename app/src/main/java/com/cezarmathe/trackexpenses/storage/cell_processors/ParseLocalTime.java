@@ -1,23 +1,23 @@
 package com.cezarmathe.trackexpenses.storage.cell_processors;
 
-import org.joda.time.DateTime;
+import org.joda.time.LocalTime;
 import org.supercsv.cellprocessor.CellProcessorAdaptor;
 import org.supercsv.cellprocessor.ift.CellProcessor;
 import org.supercsv.util.CsvContext;
 
-public class ParseDateTime extends CellProcessorAdaptor {
+public class ParseLocalTime extends CellProcessorAdaptor {
 
-    public ParseDateTime() {}
+    public ParseLocalTime() {}
 
-    public ParseDateTime(CellProcessor next) {
+    public ParseLocalTime(CellProcessor next) {
         super(next);
     }
 
     @Override
-    public DateTime execute(Object value, CsvContext context) {
+    public LocalTime execute(Object value, CsvContext context) {
 
         validateInputNotNull(value, context);
 
-        return DateTime.parse(value.toString());
+        return LocalTime.parse(value.toString());
     }
 }

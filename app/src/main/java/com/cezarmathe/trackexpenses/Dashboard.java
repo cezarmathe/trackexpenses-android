@@ -318,7 +318,7 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
     @Override
     public MoneyTableRow onItemEditPressed(MoneyTableRow item, int index) {
         Log.d(TAG, "onItemEditPressed() called with: item = [" + item + "]");
-        return storage.moneyTable.edit(item, index);
+        return storage.moneyTable.edit(item, index) ? storage.moneyTable.get(index) : item;
     }
 
     @Override
@@ -371,14 +371,24 @@ public class Dashboard extends Activity implements QuickLogFragment.OnQuickLogFr
     //    --------------------
 
 //    Other methods
-    public void makeShortToast(String test) {
+    public void makeShortToast(final String test) {
         Log.d(TAG, "makeShortToast() called with: test = [" + test + "]");
-        Toast.makeText(getApplicationContext(), test, Toast.LENGTH_SHORT).show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), test, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    public void makeLongToast(String test) {
+    public void makeLongToast(final String test) {
         Log.d(TAG, "makeLongToast() called with: test = [" + test + "]");
-        Toast.makeText(getApplicationContext(), test, Toast.LENGTH_LONG).show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), test, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 //    --------------------
 }

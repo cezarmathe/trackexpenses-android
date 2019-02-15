@@ -1,5 +1,6 @@
 package com.cezarmathe.trackexpenses.storage;
 
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.supercsv.cellprocessor.ift.CellProcessor;
@@ -15,6 +16,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Cezar Mathe <cearmathe @ gmail.com>
@@ -68,27 +70,29 @@ public abstract class Table<T> {
     /**
      * Variable used for logging.
      */
-    public      final String    TAG;
+    public      final String            TAG;
 
     /**
      * Holds the file name for this table.
      */
-    protected   final String    FILE_NAME;
+    protected   final String            FILE_NAME;
 
     /**
      * Container for field naming, must be identical to the bean used as row.
      */
-    protected   final String[]  NAME_MAPPING;
+    protected   final String[]          NAME_MAPPING;
 
     /**
      * Container for reading cell processors
      */
-    protected   final CellProcessor[] READ_PROCESSORS;
+    protected   final CellProcessor[]   READ_PROCESSORS;
 
     /**
      * Container for writing cell processors
      */
-    protected   final CellProcessor[] WRITE_PROCESSORS;
+    protected   final CellProcessor[]   WRITE_PROCESSORS;
+
+    protected   final Class<T>          TYPE;
 
     /**
      * Constructs a new Table.
@@ -96,21 +100,24 @@ public abstract class Table<T> {
      * @param fileName the file name of the table.
      * @param nameMapping name mapping for reading and writing
      * @param parentFolder the parent folder of this table.
-     * @param list the type of list used for keeping the contents
+     * @param list the TYPE of list used for keeping the contents
      * @param hook hook for notifying table events
+     * @param readingProcessors
+     * @param writingProcessors
      */
     public Table(String tag,
                  String fileName,
                  String[] nameMapping,
                  File parentFolder,
-                 ArrayList list,
+                 ArrayList<T> list,
                  TableEventHook hook,
                  CellProcessor[] readingProcessors,
-                 CellProcessor[] writingProcessors) {
+                 CellProcessor[] writingProcessors,
+                 Class<T> type) {
 
         this.TAG = tag;
 
-        Log.d(TAG, "Table() called with: tag = [" + tag + "], fileName = [" + fileName + "], nameMapping = [" + nameMapping + "], parentFolder = [" + parentFolder + "], list = [" + list + "], hook = [" + hook + "], readingProcessors = [" + readingProcessors + "], writingProcessors = [" + writingProcessors + "]");
+        Log.d(TAG, "Table() called with: tag = [" + tag + "], fileName = [" + fileName + "], nameMapping = [" + Arrays.toString(nameMapping) + "], parentFolder = [" + parentFolder + "], list = [" + list + "], hook = [" + hook + "], readingProcessors = [" + Arrays.toString(readingProcessors) + "], writingProcessors = [" + Arrays.toString(writingProcessors) + "]");
 
         this.FILE_NAME = fileName;
         this.NAME_MAPPING = nameMapping;
@@ -132,35 +139,46 @@ public abstract class Table<T> {
         this.hook = hook;
         this.READ_PROCESSORS = readingProcessors;
         this.WRITE_PROCESSORS = writingProcessors;
+        this.TYPE = type;
+
+        this.internalLock = new Object();
+        this.isLocked = false;
     }
 
 
     /**
      * File object representing the actual file on the file system.
      */
-    protected   File            tableFile;
+    private File            tableFile;
 
     /**
      * CSV reader
      * @see super-csv.github.io/super-csv/apidocs/org/supercsv/io/CsvBeanReader.html
      */
-    protected   CsvBeanReader   reader;
+    private CsvBeanReader   reader;
 
     /**
      * CSV writer
      * @see super-csv.github.io/super-csv/apidocs/org/supercsv/io/CsvBeanWriter.html
      */
-    protected   CsvBeanWriter   writer;
+    private CsvBeanWriter   writer;
 
     /**
      * Container for table contents.
      */
-    protected   ArrayList<T>    contents;
+    private ArrayList<T>    contents;
 
     /**
      * Hook for notifying table events.
      */
-    protected   TableEventHook  hook;
+    private TableEventHook  hook;
+
+    /**
+     * Internal thread locks
+     */
+    private final Object                      internalLock;
+    private volatile Boolean            isLocked;
+
 
 
     /**
@@ -187,6 +205,7 @@ public abstract class Table<T> {
         }
     }
 
+
     /**
      * Opens the writer.
      * @throws IOException
@@ -211,100 +230,191 @@ public abstract class Table<T> {
         }
     }
 
+
+
     /**
      * Reads the entire CSV file into the contents table.
      */
-    public void read() {
+    public final void read() {
         Log.d(TAG, "read() called");
-        try {
-            openReader();
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            hook.onReaderMethodFail(TAG, e);
-            return;
-        }
-        try {
-            contents = readMiddleWare();
-            hook.onReadSuccess(TAG);
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            hook.onReadFail(TAG, e);
-        } finally {
-            try {
-                closeReader();
-            } catch (IOException e) {
-                Log.e(TAG, e.toString());
-                hook.onReaderMethodFail(TAG, e);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (isLocked) {
+                    try {
+                        synchronized (internalLock) {
+                            internalLock.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "run: ", e);
+                        return;
+                    }
+                }
+                isLocked = true;
+                try {
+                    openReader();
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    isLocked = false;
+                    synchronized (internalLock) {
+                        internalLock.notify();
+                    }
+                    hook.onReaderMethodFail(TAG, e);
+                    return;
+                }
+                try {
+                    readMiddleWare();
+                    hook.onReadSuccess(TAG);
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    hook.onReadFail(TAG, e);
+                } finally {
+                    try {
+                        closeReader();
+                    } catch (IOException e) {
+                        Log.e(TAG, e.toString());
+                        hook.onReaderMethodFail(TAG, e);
+                    } finally {
+                        isLocked = false;
+                        synchronized (internalLock) {
+                            internalLock.notify();
+                        }
+                    }
+                }
             }
-        }
+        }).start();
     }
+
+    /**
+     * Read a bean
+     * @return the bean
+     * @throws IOException
+     */
+    @Nullable
+    private T readBean() throws IOException {
+        return reader.read(TYPE, NAME_MAPPING, READ_PROCESSORS);
+    }
+
+    /**
+     * Middleware for reading.
+     * @throws IOException
+     */
+    private void readMiddleWare() throws IOException {
+        Log.d(TAG, "readMiddleWare() called");
+        T bean = readBean();
+        while (bean != null) {
+            contents.add(bean);
+            Log.d(TAG, "readMiddleWare: read " + bean);
+            bean = readBean();
+        }
+        Log.d(TAG, "readMiddleWare() returned");
+    }
+
+
 
     /**
      * Writes the entire table into the CSV file.
      */
-    public Boolean write() {
+    public final Boolean write() {
         Log.d(TAG, "write() called");
-        try {
-            openWriter();
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            hook.onWriterMethodFail(TAG, e);
-            return false;
-        }
-        try {
-            writeMiddleWare(contents);
-            hook.onWriteSuccess(TAG);
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            hook.onWriteFail(TAG, e);
-            return false;
-        } finally {
-            try {
-                closeWriter();
-            } catch (IOException e) {
-                Log.e(TAG, e.toString());
-                hook.onWriterMethodFail(TAG, e);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (isLocked) {
+                    try {
+                        synchronized (internalLock) {
+                            internalLock.wait();
+                        }
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "run: ", e);
+                        return;
+                    }
+                }
+                try {
+                    openWriter();
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    synchronized (internalLock) {
+                        internalLock.notify();
+                    }
+                    hook.onWriterMethodFail(TAG, e);
+//                    return false;
+                }
+                try {
+                    writeMiddleWare();
+                    hook.onWriteSuccess(TAG);
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    hook.onWriteFail(TAG, e);
+//                    return false;
+                } finally {
+                    try {
+                        closeWriter();
+                    } catch (IOException e) {
+                        Log.e(TAG, e.toString());
+                        hook.onWriterMethodFail(TAG, e);
+                    } finally {
+                        synchronized (internalLock) {
+                            internalLock.notify();
+                        }
+                    }
+                }
             }
-        }
+        }).start();
         return true;
     }
 
     /**
-     * Rewrite the entire table file.
+     * Write a bean
+     * @param bean
+     * @throws IOException
      */
-    public Boolean rewrite() {
-        Log.d(TAG, "rewrite() called");
-
-        if (!tableFile.delete()) {
-            Log.e(TAG, "rewrite: failed to delete table file");
-            return false;
-        }
-        try {
-            if (!tableFile.createNewFile()) {
-                Log.e(TAG, "rewrite: failed to recreate table file");
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return write();
+    private void writeBean(T bean) throws IOException {
+        writer.write(bean, NAME_MAPPING, WRITE_PROCESSORS);
     }
 
-//    public void write(int begin, int end) {
-//        Log.d(TAG, "write() called with: begin = [" + begin + "], end = [" + end + "]");
-//    }
-//
-//    public void write(int index, boolean fromZero) {
-//        Log.d(TAG, "write() called with: index = [" + index + "], fromZero = [" + fromZero + "]");
-//    }
+    /**
+     * Middleware for writing
+     * @throws IOException
+     */
+    private void writeMiddleWare() throws IOException {
+        Log.d(TAG, "writeMiddleWare() called");
+        for (T bean : contents) {
+            writeBean(bean);
+            Log.d(TAG, "writeMiddleWare: wrote " + bean);
+        }
+        Log.d(TAG, "writeMiddleWare() returned");
+    }
 
+
+
+//    /**
+//     * Rewrite the entire table file.
+//     */
+//    public final Boolean rewrite() {
+//        Log.d(TAG, "rewrite() called");
+//
+//        if (!tableFile.delete()) {
+//            Log.e(TAG, "rewrite: failed to delete table file");
+//            return false;
+//        }
+//        try {
+//            if (!tableFile.createNewFile()) {
+//                Log.e(TAG, "rewrite: failed to recreate table file");
+//                return false;
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//        return write();
+//    }
 
     /**
      * Returns the size of the table.
      * @return
      */
-    public int getSize() {
+    public final int getSize() {
         Log.d(TAG, "getSize() called");
         return contents.size();
     }
@@ -314,7 +424,7 @@ public abstract class Table<T> {
      * @param index the index that needs to be checked
      * @return
      */
-    protected boolean checkIfIndexIsValid(int index) {
+    protected final boolean checkIfIndexIsValid(int index) {
         Log.d(TAG, "checkIfIndexIsValid() called with: index = [" + index + "]");
         return index >= 0 && index < getSize();
     }
@@ -324,7 +434,7 @@ public abstract class Table<T> {
      * @param index the index from the contents table
      * @return the object
      */
-    public T get(int index) {
+    public final T get(int index) {
         return contents.get(index);
     }
 
@@ -332,41 +442,44 @@ public abstract class Table<T> {
      * Retrieves the list of rows
      * @return the contents
      */
-    public ArrayList<T> get() {
+    public final ArrayList<T> get() {
         return contents;
     }
-
-
-    /**
-     * Middleware for reading.
-     * @throws IOException
-     */
-    protected abstract ArrayList<T> readMiddleWare() throws IOException;
-
-    /**
-     * Middlware for writing.
-     * @param beans the beans that need to be written
-     * @throws IOException
-     */
-    protected abstract void writeMiddleWare(ArrayList<T> beans) throws IOException;
 
     /**
      * Adds a bean to the table.
      * @param bean the bean that needs to be added
      */
-    public abstract void add(T bean);
+    public final void add(T bean) {
+        Log.d(TAG, "add() called with: bean = [" + bean + "]");
+        contents.add(bean);
+        if (!write())
+            contents.remove(contents.lastIndexOf(bean));
+    }
 
     /**
      * Removes a bean from the table.
      * @param index the index of the bean
      */
-    public abstract Boolean remove(int index);
+    public final Boolean remove(int index) {
+        Log.d(TAG, "remove() called with: index = [" + index + "]");
+        if (checkIfIndexIsValid(index)) {
+            contents.remove(index);
+        }
+        return write();
+    }
 
     /**
      * Edits a bean from the table.
      * @param bean the new bean attributes
      * @param index the index of the bean
      */
-    public abstract T edit(T bean, int index);
+    public Boolean edit(T bean, int index) {
+        Log.d(TAG, "edit() called with: bean = [" + bean + "], index = [" + index + "]");
+        if (checkIfIndexIsValid(index)) {
+            contents.set(index, bean);
+        }
+        return write();
+    }
 
 }

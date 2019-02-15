@@ -4,6 +4,7 @@ import android.graphics.Path;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.cezarmathe.trackexpenses.storage.types.Color;
 import com.cezarmathe.trackexpenses.storage.types.Operation;
 import com.cezarmathe.trackexpenses.storage.types.Tag;
 import com.google.gson.Gson;
@@ -39,8 +40,7 @@ public class UserConfig {
 //    QuickLog
     private ArrayList<Tag>  tags;
     private Integer         lastTagIndex;
-    public static final transient Integer   DEFAULT_COLOR = 0;
-    public static final transient Tag       DEFAULT_TAG = new Tag("-", DEFAULT_COLOR);
+    public static final transient Tag       DEFAULT_TAG = new Tag("-", new Color(0xffffff));
 
     public static final transient Operation DEFAULT_OPERATION = Operation.SUBTRACTION;
 
